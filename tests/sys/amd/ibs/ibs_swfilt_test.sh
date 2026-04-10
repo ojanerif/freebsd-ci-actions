@@ -6,6 +6,32 @@
 # Author: ojanerif@amd.com
 #
 
+# Shared IBS capability check — must be called at the top of every test body.
+# Skips the test if: not AMD, cpuctl unavailable, or CPUID Fn8000_0001_ECX
+# bit 10 (AMDID2_IBS) is clear.
+ibs_check_support()
+{
+	# Check for AMD CPU
+	cpu_vendor=$(sysctl -n hw.model | grep -i "AMD" || true)
+	if [ -z "$cpu_vendor" ]; then
+		atf_skip "Not an AMD CPU"
+	fi
+
+	# Check for cpuctl device
+	if [ ! -c /dev/cpuctl0 ]; then
+		atf_skip "cpuctl device not available"
+	fi
+
+	# CPUID Fn8000_0001_ECX bit 10 = IBS support (AMDID2_IBS = 0x400).
+	# Extract ECX: skip any non-hex prefix tokens, then take the 3rd hex field.
+	cpuid_ecx=$(cpucontrol -i 0x80000001 /dev/cpuctl0 2>/dev/null | \
+	    awk '{for(i=1;i<=NF;i++) if($i~/^0x[0-9a-fA-F]+$/) \
+	         {n++; if(n==3) {print $i; exit}}}')
+	if [ -z "$cpuid_ecx" ] || [ $(( cpuid_ecx & 0x400 )) -eq 0 ]; then
+		atf_skip "CPU does not support IBS (CPUID Fn8000_0001_ECX bit 10 not set)"
+	fi
+}
+
 atf_test_case ibs_swfilt_exclude_user
 ibs_swfilt_exclude_user_head()
 {
@@ -14,21 +40,12 @@ ibs_swfilt_exclude_user_head()
 }
 ibs_swfilt_exclude_user_body()
 {
-	# Check for AMD CPU
-	cpu_vendor=$(sysctl -n hw.model | grep -i "AMD" || true)
-	if [ -z "$cpu_vendor" ]; then
-		atf_skip "Not an AMD CPU"
-	fi
-
-	# Check for IBS support via cpuctl
-	if [ ! -c /dev/cpuctl0 ]; then
-		atf_skip "cpuctl device not available"
-	fi
+	ibs_check_support
 
 	# Read original IBS Fetch Control MSR value
 	original=$(rdmsr 0xc0011030 2>/dev/null)
 	if [ $? -ne 0 ]; then
-		atf_skip "Cannot read IBS Fetch Control MSR - IBS not supported"
+		atf_fail "Cannot read IBS Fetch Control MSR"
 	fi
 
 	# Test setting exclude_user bit (bit 56 in fetch control for software filtering)
@@ -70,21 +87,12 @@ ibs_swfilt_exclude_kernel_head()
 }
 ibs_swfilt_exclude_kernel_body()
 {
-	# Check for AMD CPU
-	cpu_vendor=$(sysctl -n hw.model | grep -i "AMD" || true)
-	if [ -z "$cpu_vendor" ]; then
-		atf_skip "Not an AMD CPU"
-	fi
-
-	# Check for IBS support via cpuctl
-	if [ ! -c /dev/cpuctl0 ]; then
-		atf_skip "cpuctl device not available"
-	fi
+	ibs_check_support
 
 	# Read original IBS Op Control MSR value
 	original=$(rdmsr 0xc0011033 2>/dev/null)
 	if [ $? -ne 0 ]; then
-		atf_skip "Cannot read IBS Op Control MSR - IBS not supported"
+		atf_fail "Cannot read IBS Op Control MSR"
 	fi
 
 	# Test setting cnt_ctl bit (bit 19) which controls periodic op counter
@@ -126,16 +134,7 @@ ibs_swfilt_exclude_hv_head()
 }
 ibs_swfilt_exclude_hv_body()
 {
-	# Check for AMD CPU
-	cpu_vendor=$(sysctl -n hw.model | grep -i "AMD" || true)
-	if [ -z "$cpu_vendor" ]; then
-		atf_skip "Not an AMD CPU"
-	fi
-
-	# Check for IBS support via cpuctl
-	if [ ! -c /dev/cpuctl0 ]; then
-		atf_skip "cpuctl device not available"
-	fi
+	ibs_check_support
 
 	# Check if running under hypervisor - skip if not applicable
 	hv_vendor=$(sysctl -n hw.hv_vendor 2>/dev/null || true)
@@ -146,7 +145,7 @@ ibs_swfilt_exclude_hv_body()
 	# Read original IBS Fetch Control MSR value
 	original=$(rdmsr 0xc0011030 2>/dev/null)
 	if [ $? -ne 0 ]; then
-		atf_skip "Cannot read IBS Fetch Control MSR - IBS not supported"
+		atf_fail "Cannot read IBS Fetch Control MSR"
 	fi
 
 	# Test hypervisor-related filtering bit
@@ -186,21 +185,12 @@ ibs_swfilt_filter_combination_head()
 }
 ibs_swfilt_filter_combination_body()
 {
-	# Check for AMD CPU
-	cpu_vendor=$(sysctl -n hw.model | grep -i "AMD" || true)
-	if [ -z "$cpu_vendor" ]; then
-		atf_skip "Not an AMD CPU"
-	fi
-
-	# Check for IBS support via cpuctl
-	if [ ! -c /dev/cpuctl0 ]; then
-		atf_skip "cpuctl device not available"
-	fi
+	ibs_check_support
 
 	# Read original IBS Fetch Control MSR value
 	original=$(rdmsr 0xc0011030 2>/dev/null)
 	if [ $? -ne 0 ]; then
-		atf_skip "Cannot read IBS Fetch Control MSR - IBS not supported"
+		atf_fail "Cannot read IBS Fetch Control MSR"
 	fi
 
 	# Test combined filter settings
