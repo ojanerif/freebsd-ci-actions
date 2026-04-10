@@ -186,6 +186,21 @@ ATF_TC_BODY(ibs_stress_period_changes, tc)
 		    strerror(error));
 
 	/*
+	 * Disable IBS before the test loop and drain any in-flight NMI.
+	 * If IBS was already sampling when we read 'original', there may be
+	 * a pending NMI queued that fires between our write_msr and read_msr,
+	 * causing the kernel NMI handler to re-arm the counter with the old
+	 * period and corrupt the readback.  Writing IbsOpEn=0 first and then
+	 * sleeping 1 ms ensures the NMI queue is empty before we begin.
+	 */
+	{
+		uint64_t disabled = original & ~IBS_MAXCNT_MASK;
+		disabled &= ~IBS_OP_ENABLE_BIT;
+		write_msr(0, MSR_IBS_OP_CTL, disabled);
+		usleep(1000); /* drain any in-flight IBS NMI */
+	}
+
+	/*
 	 * Rapid period changes with sampling disabled.
 	 * We do NOT enable IBS Op sampling here because with very short
 	 * periods (e.g. 0x0010) the kernel NMI handler fires between the

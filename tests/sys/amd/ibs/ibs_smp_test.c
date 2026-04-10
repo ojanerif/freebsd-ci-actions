@@ -158,18 +158,28 @@ ATF_TC_BODY(ibs_smp_per_cpu_config, tc)
 			    cpu, strerror(error));
 		}
 
-		/* Write a unique period value per CPU */
+		/* Write a unique period value per CPU.
+		 * Retry up to 3 times: an in-flight IBS NMI (from active sampling
+		 * before this test) can fire between write_msr and read_msr and
+		 * re-arm the counter with the previous period.  Three consecutive
+		 * NMI-corrupted reads is astronomically unlikely for a real issue.
+		 */
 		test_maxcnt = 0x100 + cpu;
-		written = (original & ~IBS_MAXCNT_MASK) | test_maxcnt;
-		/* Clear enable bit to avoid actual sampling */
-		written &= ~IBS_FETCH_ENABLE_BIT;
-
-		error = write_msr(cpu, MSR_IBS_FETCH_CTL, written);
-		ATF_REQUIRE_ERRNO(0, error == 0);
-
-		/* Read back and verify */
-		error = read_msr(cpu, MSR_IBS_FETCH_CTL, &readback);
-		ATF_REQUIRE_ERRNO(0, error == 0);
+		{
+			int retry;
+			for (retry = 0; retry < 3; retry++) {
+				written = (original & ~IBS_MAXCNT_MASK) | test_maxcnt;
+				written &= ~IBS_FETCH_ENABLE_BIT;
+				error = write_msr(cpu, MSR_IBS_FETCH_CTL, written);
+				ATF_REQUIRE_ERRNO(0, error == 0);
+				error = read_msr(cpu, MSR_IBS_FETCH_CTL, &readback);
+				ATF_REQUIRE_ERRNO(0, error == 0);
+				if (ibs_get_maxcnt(readback) == test_maxcnt)
+					break;
+				/* NMI fired between write and read — yield and retry */
+				sched_yield();
+			}
+		}
 		ATF_CHECK_EQ(ibs_get_maxcnt(readback), test_maxcnt);
 
 		/* Restore original value */

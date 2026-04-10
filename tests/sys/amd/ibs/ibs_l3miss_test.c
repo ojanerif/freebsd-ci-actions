@@ -53,12 +53,6 @@
 #define IBS_FETCH_L3_MISS_ONLY	0x0800000000000000ULL
 #define IBS_OP_L3_MISS_ONLY	0x0000000000010000ULL
 
-/*
- * Enable bits for IBS control registers.
- * We need to clear these when testing to avoid enabling sampling.
- */
-#define IBS_FETCH_ENABLE_BIT	(1ULL << 2)	/* IBS_FETCH_EN */
-#define IBS_OP_ENABLE_BIT	(1ULL << 17)	/* IBS_OP_EN */
 
 /*
  * Helper: Check if the CPU supports L3MissOnly feature.

@@ -70,12 +70,6 @@
  */
 #define IBS_MAXCNT_MASK		0x000000000000FFFFULL
 
-/*
- * Enable bit masks for IBS control registers.
- * We clear these when testing to avoid actually enabling sampling.
- */
-#define IBS_FETCH_ENABLE_BIT	(1ULL << 2)	/* IBS_FETCH_EN */
-#define IBS_OP_ENABLE_BIT	(1ULL << 17)	/* IBS_OP_EN */
 
 /*
  * Helper: Extract the maxcnt (period) field from an IBS control value.
