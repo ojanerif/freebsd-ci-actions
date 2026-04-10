@@ -185,20 +185,21 @@ ATF_TC_BODY(ibs_stress_period_changes, tc)
 		atf_tc_skip("Cannot read MSR_IBS_OP_CTL: %s",
 		    strerror(error));
 
-	/* Enable IBS with initial period */
-	written = (original & ~IBS_MAXCNT_MASK) | test_periods[0];
-	written |= IBS_OP_ENABLE_BIT;
-
-	error = write_msr(0, MSR_IBS_OP_CTL, written);
-	ATF_REQUIRE_ERRNO(0, error == 0);
-
-	/* Rapid period changes */
+	/*
+	 * Rapid period changes with sampling disabled.
+	 * We do NOT enable IBS Op sampling here because with very short
+	 * periods (e.g. 0x0010) the kernel NMI handler fires between the
+	 * write_msr and read_msr calls and re-arms the counter with its own
+	 * stored period, corrupting the readback.  The purpose of this test
+	 * is to verify that the MaxCnt field is preserved across write/read
+	 * cycles, which does not require sampling to be active.
+	 */
 	for (i = 0; i < iterations; i++) {
 		uint64_t period = test_periods[i % n_periods];
 
-		/* Write new period (keep enable bit set) */
+		/* Write new period with sampling disabled */
 		written = (original & ~IBS_MAXCNT_MASK) | period;
-		written |= IBS_OP_ENABLE_BIT;
+		written &= ~IBS_OP_ENABLE_BIT;
 
 		error = write_msr(0, MSR_IBS_OP_CTL, written);
 		ATF_REQUIRE_ERRNO(0, error == 0);

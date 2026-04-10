@@ -164,7 +164,7 @@
 
 /* Additional IBS constants for tests */
 #define IBS_MAXCNT_MASK			0x000000000000FFFFULL
-#define IBS_FETCH_ENABLE_BIT		(1ULL << 2)	/* IBS_FETCH_EN */
+#define IBS_FETCH_ENABLE_BIT		(1ULL << 48)	/* IBS_FETCH_EN */
 #define IBS_OP_ENABLE_BIT		(1ULL << 17)	/* IBS_OP_EN */
 #define IBS_FETCH_CTL_ENABLE		(1ULL << 48)	/* IBS_FETCH_EN */
 #define IBS_OP_CTL_ENABLE		(1ULL << 17)	/* IBS_OP_EN */

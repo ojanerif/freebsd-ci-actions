@@ -78,7 +78,14 @@ ibs_get_data_src(uint64_t op_data2)
 	uint64_t lo, hi;
 
 	lo = op_data2 & IBS_DATA_SRC_MASK_LO;
-	hi = (op_data2 & IBS_DATA_SRC_MASK_HI) >> IBS_DATA_SRC_SHIFT_HI;
+	/*
+	 * The high DataSrc bits sit at positions [7:6] in the MSR register,
+	 * so they must be shifted right by 6 (not by IBS_DATA_SRC_SHIFT_HI=3)
+	 * to obtain the 2-bit hi field.  IBS_DATA_SRC_SHIFT_HI describes the
+	 * bit position of hi within the *combined* DataSrc value, not its
+	 * position within the MSR.
+	 */
+	hi = (op_data2 & IBS_DATA_SRC_MASK_HI) >> 6;
 
 	return (hi << 3) | lo;
 }

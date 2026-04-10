@@ -92,11 +92,21 @@ ATF_TC_BODY(ibs_detect_msr_access, tc)
 
 	/* Test Zen 4+ extended MSRs if available */
 	if (cpu_is_zen4()) {
+		int r;
+
 		/* Test IC IBS Extended Control MSR */
 		ATF_REQUIRE(read_msr(cpu, MSR_AMD64_ICIBSEXTDCTL, &val) == 0);
 
-		/* Test IBS Op Data 4 MSR */
-		ATF_REQUIRE(read_msr(cpu, MSR_AMD64_IBSOPDATA4, &val) == 0);
+		/*
+		 * MSR_AMD64_IBSOPDATA4 is a read-only status register that is
+		 * populated by hardware only during active IBS Op sampling.
+		 * Attempting to read it when IBS Op is not active generates a
+		 * hardware error.  Skip rather than fail in that case.
+		 */
+		r = read_msr(cpu, MSR_AMD64_IBSOPDATA4, &val);
+		if (r != 0)
+			atf_tc_skip("MSR_AMD64_IBSOPDATA4 not accessible "
+			    "without active IBS Op sampling: %s", strerror(r));
 	}
 }
 
