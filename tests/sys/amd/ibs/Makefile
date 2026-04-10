@@ -19,7 +19,18 @@ ATF_TESTS_C=	ibs_cpu_test \
 		ibs_period_test \
 		ibs_routing_test \
 		ibs_l3miss_test \
-		ibs_ioctl_test
+		ibs_ioctl_test \
+		ibs_unit_field_masks_test \
+		ibs_unit_helpers_test \
+		ibs_unit_datasrc_test \
+		ibs_unit_cpuid_parse_test \
+		ibs_unit_op_ext_maxcnt_test \
+		ibs_unit_feature_flags_test \
+		ibs_cpuctl_access_test \
+		ibs_access_control_test \
+		ibs_invalid_input_test \
+		ibs_robustness_test \
+		ibs_concurrency_test
 
 ATF_TESTS_SH=	ibs_swfilt_test
 

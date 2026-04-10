@@ -25,7 +25,18 @@ Tests live in `tests/sys/amd/ibs/` and are built with the FreeBSD ATF
    - [ibs_l3miss_test](#ibs_l3miss_test)
    - [ibs_ioctl_test](#ibs_ioctl_test)
    - [ibs_swfilt_test (shell)](#ibs_swfilt_test)
-5. [Shared Infrastructure — ibs_utils.h](#shared-infrastructure)
+   - [ibs_unit_field_masks_test](#ibs_unit_field_masks_test)
+   - [ibs_unit_helpers_test](#ibs_unit_helpers_test)
+   - [ibs_unit_datasrc_test](#ibs_unit_datasrc_test)
+   - [ibs_unit_cpuid_parse_test](#ibs_unit_cpuid_parse_test)
+   - [ibs_unit_op_ext_maxcnt_test](#ibs_unit_op_ext_maxcnt_test)
+   - [ibs_unit_feature_flags_test](#ibs_unit_feature_flags_test)
+   - [ibs_cpuctl_access_test](#ibs_cpuctl_access_test)
+   - [ibs_access_control_test](#ibs_access_control_test)
+   - [ibs_invalid_input_test](#ibs_invalid_input_test)
+   - [ibs_robustness_test](#ibs_robustness_test)
+   - [ibs_concurrency_test](#ibs_concurrency_test)
+5. [Shared Infrastructure — ibs_decode.h / ibs_utils.h](#shared-infrastructure)
 6. [Known Skip Conditions](#known-skip-conditions)
 7. [Bug History and Fixes](#bug-history-and-fixes)
 
@@ -79,6 +90,17 @@ that controls the pass/fail verdict threshold.
 | `[TC-SMP]` | SMP / per-CPU | HIGH | ≥ 95% |
 | `[TC-API]` | API / encoding | MEDIUM | ≥ 80% |
 | `[TC-STR]` | Stress | MEDIUM | ≥ 80% |
+| `[TC-UNIT-MASK]` | Unit: field mask constants | LOW | 100% (pure logic — no skips) |
+| `[TC-UNIT-HELP]` | Unit: helper functions | LOW | 100% |
+| `[TC-UNIT-DSRC]` | Unit: DataSrc extraction | LOW | 100% |
+| `[TC-UNIT-CPUID]` | Unit: CPUID parsing | LOW | 100% |
+| `[TC-UNIT-EXT]` | Unit: extended MaxCnt | LOW | 100% |
+| `[TC-UNIT-FEAT]` | Unit: feature flag accessors | LOW | 100% |
+| `[TC-CPUCTL]` | cpuctl driver interface | HIGH | ≥ 95% |
+| `[TC-ACCTL]` | Access control (root/non-root) | HIGH | ≥ 95% |
+| `[TC-INV]` | Invalid / boundary input | HIGH | ≥ 95% |
+| `[TC-ROB]` | Robustness / kernel survival | HIGH | ≥ 90% (placeholders count as SKIP) |
+| `[TC-CON]` | Concurrency | HIGH | ≥ 95% |
 
 A test that SKIPS does not count as a failure; it is excluded from the
 pass-rate calculation.
@@ -716,7 +738,284 @@ available.
 
 ---
 
+### ibs_unit_field_masks_test
+
+**Category:** `[TC-UNIT-MASK]` LOW — 100% pass threshold  
+**Source:** `ibs_unit_field_masks_test.c`  
+**Requires:** No hardware, no root, any architecture.
+
+Verifies every bit-mask and MSR address constant in `ibs_decode.h` against
+the AMD PPR.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-UNIT-MASK-01 | `ibs_unit_fetch_ctl_mask_values` | IBS_FETCH_MAXCNT=0xFFFF, IBS_FETCH_EN=bit48, IBS_FETCH_VAL=bit49, IBS_FETCH_COMP=bit50, IBS_L3_MISS_ONLY=bit59, IBS_RAND_EN=bit57 |
+| TC-UNIT-MASK-02 | `ibs_unit_op_ctl_mask_values` | IBS_OP_MAXCNT=0xFFFF, IBS_OP_EN=bit17, IBS_OP_VAL=bit18, IBS_CNT_CTL=bit19, IBS_OP_MAXCNT_EXT=bits20-26, IBS_OP_L3_MISS_ONLY=bit16 |
+| TC-UNIT-MASK-03 | `ibs_unit_op_data1_mask_values` | IBS_COMP_TO_RET_CTR, IBS_TAG_TO_RET_CTR, IBS_OP_RETURN=bit34, IBS_OP_BRN_TAKEN=bit35, IBS_OP_BRN_MISP=bit36, IBS_OP_BRN_RET=bit37 |
+| TC-UNIT-MASK-04 | `ibs_unit_op_data2_mask_values` | IBS_DATA_SRC_LO=bits0-2, IBS_RMT_NODE=bit4, IBS_CACHE_HIT_ST=bit5, IBS_DATA_SRC_HI=bits6-7 |
+| TC-UNIT-MASK-05 | `ibs_unit_op_data3_mask_values` | IBS_LD_OP=bit0, IBS_ST_OP=bit1, IBS_DC_MISS=bit7, IBS_DC_LIN_ADDR_VALID=bit17, IBS_DC_PHY_ADDR_VALID=bit18, IBS_DC_MISS_LAT=bits32-47 |
+| TC-UNIT-MASK-06 | `ibs_unit_msr_address_map` | All 14 MSR address constants match AMD PPR (0xC0011030–0xC001103D) |
+| TC-UNIT-MASK-07 | `ibs_unit_cpuid_constants` | CPUID_IBSID=0x8000001B, feature bit positions 0-6 correct |
+| TC-UNIT-MASK-08 | `ibs_unit_no_mask_overlap_fetch` | All IBS_FETCH_* masks are mutually non-overlapping (pairwise AND == 0) |
+| TC-UNIT-MASK-09 | `ibs_unit_no_mask_overlap_op` | All IBS_OP_* control masks in IBSOPCTL are mutually non-overlapping |
+
+---
+
+### ibs_unit_helpers_test
+
+**Category:** `[TC-UNIT-HELP]` LOW  
+**Source:** `ibs_unit_helpers_test.c`  
+**Requires:** No hardware, no root, any architecture.
+
+Tests `ibs_get_maxcnt()`, `ibs_set_maxcnt()`, and `ibs_maxcnt_to_period()`
+from `ibs_decode.h`.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-UNIT-HELP-01 | `ibs_unit_get_maxcnt_zero` | `ibs_get_maxcnt(0) == 0` |
+| TC-UNIT-HELP-02 | `ibs_unit_get_maxcnt_max` | `ibs_get_maxcnt(0xFFFF) == 0xFFFF` |
+| TC-UNIT-HELP-03 | `ibs_unit_get_maxcnt_no_bleed` | `ibs_get_maxcnt(0xFFFFFFFFFFFF0000) == 0` |
+| TC-UNIT-HELP-04 | `ibs_unit_get_maxcnt_mid` | `ibs_get_maxcnt(0x00DEADBEEF001234) == 0x1234` |
+| TC-UNIT-HELP-05 | `ibs_unit_set_maxcnt_basic` | `ibs_set_maxcnt(0, 0x1000) == 0x1000` |
+| TC-UNIT-HELP-06 | `ibs_unit_set_maxcnt_preserves_upper` | `ibs_set_maxcnt(0xFFFFFFFFFFFF0000, 0x1234) == 0xFFFFFFFFFFFF1234` |
+| TC-UNIT-HELP-07 | `ibs_unit_set_maxcnt_clears` | `ibs_set_maxcnt(0xFFFF, 0) == 0` |
+| TC-UNIT-HELP-08 | `ibs_unit_set_maxcnt_clamps` | `ibs_set_maxcnt(0, 0x1FFFF) == 0xFFFF` (extra bits masked) |
+| TC-UNIT-HELP-09 | `ibs_unit_roundtrip_all` | `ibs_get_maxcnt(ibs_set_maxcnt(0, n)) == n` for all n in 0..0xFFFF |
+| TC-UNIT-HELP-10 | `ibs_unit_period_min` | `ibs_maxcnt_to_period(1) == 16` |
+| TC-UNIT-HELP-11 | `ibs_unit_period_max` | `ibs_maxcnt_to_period(0xFFFF) == 0xFFFF0` |
+| TC-UNIT-HELP-12 | `ibs_unit_period_zero` | `ibs_maxcnt_to_period(0) == 0` |
+| TC-UNIT-HELP-13 | `ibs_unit_period_mid` | `ibs_maxcnt_to_period(0x100) == 0x1000` |
+| TC-UNIT-HELP-14 | `ibs_unit_period_shift` | `ibs_maxcnt_to_period(n) == n << 4` for representative n |
+
+---
+
+### ibs_unit_datasrc_test
+
+**Category:** `[TC-UNIT-DSRC]` LOW  
+**Source:** `ibs_unit_datasrc_test.c`  
+**Requires:** No hardware, no root, any architecture.
+
+Tests `ibs_get_data_src()` — the combined DataSrc field extractor.
+Formula: `result = ((op_data2 & IBS_DATA_SRC_HI) >> 6) << 3 | (op_data2 & IBS_DATA_SRC_LO)`.
+
+Includes a regression test for the shift-3 bug (TC-UNIT-DSRC-10).
+
+| Test ID | Test case | Input op_data2 | Expected result |
+|---|---|---|---|
+| TC-UNIT-DSRC-01 | `ibs_unit_datasrc_l1` | 0x00 | 0 (local L1) |
+| TC-UNIT-DSRC-02 | `ibs_unit_datasrc_l2` | 0x01 | 1 (local L2) |
+| TC-UNIT-DSRC-03 | `ibs_unit_datasrc_dram` | 0x03 | 3 (local DRAM) |
+| TC-UNIT-DSRC-04 | `ibs_unit_datasrc_remote_dram` | 0x04 | 4 (remote DRAM) |
+| TC-UNIT-DSRC-05 | `ibs_unit_datasrc_hi_shift` | 0x40 (bit6) | 0x08 |
+| TC-UNIT-DSRC-06 | `ibs_unit_datasrc_ext_8` | 0x40 | 0x08 (extended non-DRAM) |
+| TC-UNIT-DSRC-07 | `ibs_unit_datasrc_ext_c` | 0x44 | 0x0C (peer agent) |
+| TC-UNIT-DSRC-08 | `ibs_unit_datasrc_ext_d` | 0x45 | 0x0D (long-latency DRAM) |
+| TC-UNIT-DSRC-09 | `ibs_unit_datasrc_no_bleed` | 0xFFFFFFFFFFFFFF18 | same as 0x18 → 0 |
+| TC-UNIT-DSRC-10 | `ibs_unit_datasrc_regression_shift6` | 0x40 | must equal 0x08, not 0x40 |
+
+---
+
+### ibs_unit_cpuid_parse_test
+
+**Category:** `[TC-UNIT-CPUID]` LOW  
+**Source:** `ibs_unit_cpuid_parse_test.c`  
+**Requires:** No hardware, no root, any architecture.
+
+Tests `ibs_cpuid_family()`, `ibs_cpuid_model()`, `ibs_cpuid_stepping()`,
+`cpu_is_zen4_from_eax()`, and `cpu_is_zen5_from_eax()` against known EAX
+values from the AMD PPR.
+
+| Test ID | Test case | Input EAX | Expected |
+|---|---|---|---|
+| TC-UNIT-CPUID-01 | `ibs_unit_family_zen1` | 0x00800F11 | family 0x17 |
+| TC-UNIT-CPUID-02 | `ibs_unit_family_zen2` | 0x00870F10 | family 0x17 |
+| TC-UNIT-CPUID-03 | `ibs_unit_family_zen3` | 0x00A00F10 | family 0x19 |
+| TC-UNIT-CPUID-04 | `ibs_unit_family_zen4` | 0x00A20F10 | family 0x19 |
+| TC-UNIT-CPUID-05 | `ibs_unit_family_zen5` | 0x00B10F00 | family 0x1A |
+| TC-UNIT-CPUID-06 | `ibs_unit_family_intel` | 0x000306C3 | family 0x06 |
+| TC-UNIT-CPUID-07 | `ibs_unit_model_extraction` | 0x00A20F10 | model 0x21 |
+| TC-UNIT-CPUID-08 | `ibs_unit_stepping_extraction` | 0x00A20F12 | stepping 2 |
+| TC-UNIT-CPUID-09 | `ibs_unit_is_zen4_true` | 0x00A20F10 | `cpu_is_zen4_from_eax()` == true |
+| TC-UNIT-CPUID-10 | `ibs_unit_is_zen4_false_zen3` | 0x00A00F10 | `cpu_is_zen4_from_eax()` == false |
+| TC-UNIT-CPUID-11 | `ibs_unit_is_zen5_true` | 0x00B10F00 | `cpu_is_zen5_from_eax()` == true |
+
+---
+
+### ibs_unit_op_ext_maxcnt_test
+
+**Category:** `[TC-UNIT-EXT]` LOW  
+**Source:** `ibs_unit_op_ext_maxcnt_test.c`  
+**Requires:** No hardware, no root, any architecture.
+
+Tests `ibs_op_get_full_maxcnt()` and `ibs_op_set_full_maxcnt()` — the 23-bit
+extended MaxCnt helpers for Zen 2+ processors.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-UNIT-EXT-01 | `ibs_unit_ext_maxcnt_base_only` | `get_full(0x1234) == 0x1234` |
+| TC-UNIT-EXT-02 | `ibs_unit_ext_maxcnt_ext_only` | `get_full(1<<20) == 0x10000` |
+| TC-UNIT-EXT-03 | `ibs_unit_ext_maxcnt_combined` | `get_full(0x101234) == 0x11234` |
+| TC-UNIT-EXT-04 | `ibs_unit_ext_maxcnt_max` | `get_full(ext=0x7F, base=0xFFFF) == 0x7FFFFF` |
+| TC-UNIT-EXT-05 | `ibs_unit_ext_set_roundtrip` | `get_full(set_full(0, n)) == n` for n in {0,1,0xFFFF,0x10000,0x7FFFFF} |
+| TC-UNIT-EXT-06 | `ibs_unit_ext_shift_is_20` | `IBS_OP_MAXCNT_EXT_SHIFT == 20` |
+| TC-UNIT-EXT-07 | `ibs_unit_ext_mask_7bits` | `IBS_OP_MAXCNT_EXT` covers exactly 7 bits (26:20) |
+
+---
+
+### ibs_unit_feature_flags_test
+
+**Category:** `[TC-UNIT-FEAT]` LOW  
+**Source:** `ibs_unit_feature_flags_test.c`  
+**Requires:** No hardware, no root, any architecture.
+
+Verifies IBS_CPUID_* bit positions (CPUID 0x8000001B EAX) and the
+`ibs_feat_*()` boolean accessor functions from `ibs_decode.h`.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-UNIT-FEAT-01 | `ibs_unit_feat_fetch_sam_bit` | `IBS_CPUID_FETCH_SAMPLING == (1<<0)` |
+| TC-UNIT-FEAT-02 | `ibs_unit_feat_op_sam_bit` | `IBS_CPUID_OP_SAMPLING == (1<<1)` |
+| TC-UNIT-FEAT-03 | `ibs_unit_feat_rdwropcnt_bit` | `IBS_CPUID_RDWROPCNT == (1<<2)` |
+| TC-UNIT-FEAT-04 | `ibs_unit_feat_opcnt_bit` | `IBS_CPUID_OPCNT == (1<<3)` |
+| TC-UNIT-FEAT-05 | `ibs_unit_feat_brntarget_bit` | `IBS_CPUID_BRANCH_TARGET_ADDR == (1<<4)` |
+| TC-UNIT-FEAT-06 | `ibs_unit_feat_opdata4_bit` | `IBS_CPUID_OP_DATA_4 == (1<<5)` |
+| TC-UNIT-FEAT-07 | `ibs_unit_feat_zen4_bit` | `IBS_CPUID_ZEN4_IBS == (1<<6)` |
+| TC-UNIT-FEAT-08 | `ibs_unit_feat_parse_zen4` | `ibs_feat_zen4(0x7F) == true`; `ibs_feat_zen4(0x3F) == false` |
+| TC-UNIT-FEAT-09 | `ibs_unit_feat_parse_none` | All accessors return false when EAX == 0 |
+| TC-UNIT-FEAT-10 | `ibs_unit_feat_independent_bits` | All 7 feature bits are mutually non-overlapping |
+
+---
+
+### ibs_cpuctl_access_test
+
+**Category:** `[TC-CPUCTL]` HIGH  
+**Source:** `ibs_cpuctl_access_test.c`  
+**Requires:** Root, `/dev/cpuctl0` present (cpuctl module loaded).
+
+Tests the `/dev/cpuctl<N>` device interface without requiring IBS hardware.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-CPUCTL-01 | `ibs_cpuctl_open_rdwr` | `open("/dev/cpuctl0", O_RDWR)` succeeds as root |
+| TC-CPUCTL-02 | `ibs_cpuctl_open_rdonly` | O_RDONLY: CPUCTL_RDMSR succeeds; CPUCTL_WRMSR returns EBADF/EPERM |
+| TC-CPUCTL-03 | `ibs_cpuctl_per_cpu_device` | `/dev/cpuctl0..N-1` all open; count == `sysconf(_SC_NPROCESSORS_ONLN)` |
+| TC-CPUCTL-04 | `ibs_cpuctl_cpuid_ibs_leaf` | `CPUCTL_CPUID` leaf 0x8000001B executes without error; EAX != 0 on IBS CPU |
+| TC-CPUCTL-05 | `ibs_cpuctl_cpuid_basic_leaf` | `CPUCTL_CPUID` leaf 0x0 always succeeds; max_leaf >= 1 |
+
+---
+
+### ibs_access_control_test
+
+**Category:** `[TC-ACCTL]` HIGH  
+**Source:** `ibs_access_control_test.c`  
+**Requires:** Root (so child can call `setuid()` to drop privileges).
+
+Uses `fork()`+`setuid()` to verify that unprivileged users are denied MSR
+access and that root is permitted.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-ACCTL-01 | `ibs_nonroot_cpuctl_open` | `open("/dev/cpuctl0", O_RDWR)` as non-root → EACCES/EPERM |
+| TC-ACCTL-02 | `ibs_nonroot_msr_read` | `read_msr()` as non-root → EACCES/EPERM |
+| TC-ACCTL-03 | `ibs_nonroot_msr_write` | `write_msr()` as non-root → EACCES/EPERM |
+| TC-ACCTL-04 | `ibs_root_msr_accessible` | `read_msr(MSR_IBS_FETCH_CTL)` as root → succeeds (or skip on non-IBS CPU) |
+
+**Skip condition (TC-ACCTL-01..03):** Cannot obtain an unprivileged UID
+(`nobody` not present and UID 65534 not usable).
+
+---
+
+### ibs_invalid_input_test
+
+**Category:** `[TC-INV]` HIGH  
+**Source:** `ibs_invalid_input_test.c`  
+**Requires:** Root, `/dev/cpuctl0` present.
+
+Sends bad MSR numbers and malformed ioctl arguments; verifies well-defined
+error codes and no kernel panic.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-INV-01 | `ibs_invalid_msr_below_range` | RDMSR on 0xC001102F → EIO/EFAULT, not panic |
+| TC-INV-02 | `ibs_invalid_msr_gap` | RDMSR on MSR_AMD64_IBSBRTARGET (0xC001103B) → EIO or 0, not panic |
+| TC-INV-03 | `ibs_invalid_msr_above_range` | RDMSR on 0xC001103E → EIO/EFAULT, not panic |
+| TC-INV-04 | `ibs_invalid_msr_garbage` | RDMSR on 0xDEADBEEF → EIO/EFAULT, not panic |
+| TC-INV-05 | `ibs_wrmsr_null_argp` | `ioctl(fd, CPUCTL_WRMSR, NULL)` → EFAULT |
+| TC-INV-06 | `ibs_rdmsr_null_argp` | `ioctl(fd, CPUCTL_RDMSR, NULL)` → EFAULT |
+| TC-INV-07 | `ibs_unknown_ioctl_cmd` | `ioctl(fd, 0xDEAD, NULL)` → ENOTTY or EINVAL |
+
+---
+
+### ibs_robustness_test
+
+**Category:** `[TC-ROB]` HIGH  
+**Source:** `ibs_robustness_test.c`  
+**Requires:** Root, AMD IBS hardware.
+
+Confirms the kernel does not panic or hang under adversarial IBS patterns.
+A SKIP is acceptable; a crash or watchdog trip is a hard failure.
+
+| Test ID | Test case | Status | What is tested |
+|---|---|---|---|
+| TC-ROB-01 | `ibs_robustness_nmi_flood` | **Placeholder** | MaxCnt=1 (16-cycle period), 5 s; requires hwpmc IBS handler active |
+| TC-ROB-02 | `ibs_robustness_all_cpus_nmi_flood` | **Placeholder** | All CPUs flooding simultaneously |
+| TC-ROB-03 | `ibs_robustness_reserved_bits_with_enable` | Implemented | Write 0xFFFF…FFFF to IBSFETCHCTL; EFAULT/EIO or reserved bits masked |
+| TC-ROB-04 | `ibs_robustness_fork_under_sampling` | Implemented | IBS Fetch on CPU 0, fork child to CPU 1; parent CPU 0 state unchanged |
+| TC-ROB-05 | `ibs_robustness_rapid_affinity_switch` | Implemented | IBS on CPU 0, migrate thread across all CPUs; no cross-CPU state bleed |
+
+**Placeholder note (TC-ROB-01, TC-ROB-02):** MaxCnt=1 generates ~250 M NMIs/s
+at 4 GHz.  Without hwpmc's IBS NMI handler registered, the kernel cannot
+service them at that rate.  These tests skip until a mechanism exists to
+verify the handler is active (e.g., `sysctl dev.hwpmc.0.ibs_active`).
+
+---
+
+### ibs_concurrency_test
+
+**Category:** `[TC-CON]` HIGH  
+**Source:** `ibs_concurrency_test.c`  
+**Requires:** Root, AMD IBS hardware.
+
+Tests concurrent process and thread access to IBS MSRs.
+
+| Test ID | Test case | What is verified |
+|---|---|---|
+| TC-CON-01 | `ibs_concurrent_multiprocess` | fork() N children (one per CPU); each reads MSR_IBS_FETCH_CTL 100×; all exit 0 — no cross-process fd corruption |
+| TC-CON-02 | `ibs_signal_storm_under_sampling` | IBS Op enabled + SIGALRM at 1 kHz for 5 s; process survives, MSR remains accessible after |
+
+---
+
 ## Shared Infrastructure
+
+### `ibs_decode.h`
+
+Pure-C helper header for the `[TC-UNIT-*]` tier.  Includes only `<stdint.h>`
+and `<stdbool.h>` — no OS-specific headers, no hardware I/O.  Builds and runs
+on any architecture.
+
+Provides:
+
+| Function / constant | Description |
+|---|---|
+| `ibs_get_maxcnt(ctl)` | Extract MaxCnt from bits 15:0 |
+| `ibs_set_maxcnt(ctl, n)` | Set MaxCnt, preserve upper bits, clamp to 16 bits |
+| `ibs_maxcnt_to_period(n)` | Convert MaxCnt → sampling period in cycles (`n << 4`) |
+| `ibs_get_data_src(op_data2)` | Extract combined 5-bit DataSrc field (shift-6 corrected) |
+| `ibs_cpuid_family(eax)` | Extract CPU family from CPUID 1 EAX |
+| `ibs_cpuid_model(eax)` | Extract CPU model from CPUID 1 EAX |
+| `ibs_cpuid_stepping(eax)` | Extract CPU stepping from CPUID 1 EAX |
+| `cpu_is_zen4_from_eax(eax)` | True if family 0x19 and model >= 0x10 |
+| `cpu_is_zen5_from_eax(eax)` | True if family 0x1A |
+| `ibs_op_get_full_maxcnt(opctl)` | Extract 23-bit MaxCnt from IBSOPCTL (Zen 2+) |
+| `ibs_op_set_full_maxcnt(opctl, n)` | Set 23-bit MaxCnt in IBSOPCTL (Zen 2+) |
+| `ibs_feat_fetch_sampling(eax)` | True if CPUID 0x8000001B EAX bit 0 set |
+| `ibs_feat_op_sampling(eax)` | True if CPUID 0x8000001B EAX bit 1 set |
+| `ibs_feat_zen4(eax)` | True if CPUID 0x8000001B EAX bit 6 set |
+| `IBS_MSR_*` constants | All 14 IBS MSR addresses (0xC0011030–0xC001103D) |
+| `IBS_CPUID_*` constants | CPUID leaf 0x8000001B feature bit positions |
+| `IBS_FETCH_*`, `IBS_OP_*`, `IBS_DATA_*` | All bit-field masks |
+
+---
 
 ### `ibs_utils.h`
 
@@ -798,6 +1097,15 @@ test failures:
 | `ibs_swfilt_test:ibs_swfilt_exclude_kernel` | IBS MSR access restricted in shell test environment |
 | `ibs_swfilt_test:ibs_swfilt_exclude_user` | Same as above |
 | `ibs_swfilt_test:ibs_swfilt_filter_combination` | Same as above |
+| `ibs_robustness_test:ibs_robustness_nmi_flood` | **Placeholder** — MaxCnt=1 (~250 M NMIs/s) requires hwpmc IBS NMI handler active |
+| `ibs_robustness_test:ibs_robustness_all_cpus_nmi_flood` | **Placeholder** — same reason as above (all-CPU flood) |
+| `ibs_robustness_test:ibs_robustness_fork_under_sampling` | Single-CPU system (test requires ≥ 2 CPUs) |
+| `ibs_robustness_test:ibs_robustness_rapid_affinity_switch` | Single-CPU system (test requires ≥ 2 CPUs) |
+| `ibs_access_control_test:ibs_nonroot_cpuctl_open` | No usable unprivileged UID (`nobody` absent, UID 65534 unavailable) |
+| `ibs_access_control_test:ibs_nonroot_msr_read` | Same as above |
+| `ibs_access_control_test:ibs_nonroot_msr_write` | Same as above |
+| `ibs_concurrency_test:ibs_concurrent_multiprocess` | `sysconf(_SC_NPROCESSORS_ONLN)` returned < 1 |
+| `ibs_concurrency_test:ibs_signal_storm_under_sampling` | `MSR_IBS_OP_CTL` inaccessible (cpuctl not loaded or no IBS hardware) |
 
 ---
 

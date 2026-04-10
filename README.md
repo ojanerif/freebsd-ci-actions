@@ -18,6 +18,7 @@ freebsd-ci-actions/
         └── amd/
             └── ibs/
                 ├── Makefile
+                ├── ibs_decode.h             # Pure-C bit-field helpers (no OS headers) — used by unit tests
                 ├── ibs_utils.h              # Shared MSR definitions and helpers
                 ├── ibs_api_test.c
                 ├── ibs_cpu_test.c
@@ -31,7 +32,18 @@ freebsd-ci-actions/
                 ├── ibs_routing_test.c
                 ├── ibs_smp_test.c
                 ├── ibs_stress_test.c
-                └── ibs_swfilt_test.sh
+                ├── ibs_swfilt_test.sh
+                ├── ibs_unit_field_masks_test.c   # [TC-UNIT-MASK] bit-mask constants
+                ├── ibs_unit_helpers_test.c        # [TC-UNIT-HELP] MaxCnt/period helpers
+                ├── ibs_unit_datasrc_test.c        # [TC-UNIT-DSRC] DataSrc extraction
+                ├── ibs_unit_cpuid_parse_test.c    # [TC-UNIT-CPUID] family/model parsing
+                ├── ibs_unit_op_ext_maxcnt_test.c  # [TC-UNIT-EXT] 23-bit extended MaxCnt
+                ├── ibs_unit_feature_flags_test.c  # [TC-UNIT-FEAT] CPUID feature flags
+                ├── ibs_cpuctl_access_test.c       # [TC-CPUCTL] cpuctl driver interface
+                ├── ibs_access_control_test.c      # [TC-ACCTL] root/non-root access control
+                ├── ibs_invalid_input_test.c       # [TC-INV] bad MSR numbers and ioctl args
+                ├── ibs_robustness_test.c          # [TC-ROB] kernel survival under adversarial use
+                └── ibs_concurrency_test.c         # [TC-CON] multiprocess/signal concurrency
 ```
 
 ## Requirements
@@ -75,21 +87,32 @@ kyua test -k 'ibs_detect_test:ibs_detect'
 Validates AMD IBS hardware sampling via direct MSR access on FreeBSD.
 Framework: ATF + Kyua. Privileges: root (cpuctl MSR access).
 
-| File | Category | What it tests | Status |
+| File | Category tag | What it tests | Status |
 |---|---|---|---|
-| `ibs_msr_test` | Smoke | MSR read/write via cpuctl | Implemented |
-| `ibs_detect_test` | Detection | CPUID-based IBS feature detection (basic, extended, Zen 4) | Implemented |
-| `ibs_api_test` | API | MSR round-trip, reserved-bit handling | Implemented |
-| `ibs_cpu_test` | Detection | CPU family/model (10h–1Ah), TSC frequency | Implemented |
-| `ibs_interrupt_test` | Interrupt | NMI enable/disable, VALID polling, AMD Errata #420 | Implemented |
-| `ibs_period_test` | Config | Sampling period encoding and rollover (Fetch and Op) | Implemented |
-| `ibs_routing_test` | Config | Enable/disable bits, count-control, global IBS CTL | Implemented |
-| `ibs_data_accuracy_test` | Data | DataSrc encodings, Op Data fields, address registers | Implemented |
-| `ibs_smp_test` | SMP | Per-CPU MSR isolation, concurrent sampling, migration | Implemented |
-| `ibs_stress_test` | Stress | Rapid enable/disable (1000×), period changes, 60 s load | Implemented |
-| `ibs_l3miss_test` | Filter | L3MissOnly filtering in Fetch and Op (Zen 4+ only) | Implemented |
-| `ibs_swfilt_test` | Filter | Software filter bits (exclude_user/kernel/hv) via rdmsr/wrmsr | Implemented |
-| `ibs_ioctl_test` | API | Kernel ioctl API | **Placeholder** — kernel-side not yet implemented |
+| `ibs_msr_test` | `[TC-MSR]` Smoke | MSR read/write via cpuctl | Implemented |
+| `ibs_detect_test` | `[TC-DET]` Detection | CPUID-based IBS feature detection (basic, extended, Zen 4) | Implemented |
+| `ibs_api_test` | `[TC-API]` API | MSR round-trip, reserved-bit handling | Implemented |
+| `ibs_cpu_test` | `[TC-DET]` Detection | CPU family/model (10h–1Ah), TSC frequency | Implemented |
+| `ibs_interrupt_test` | `[TC-INT]` Interrupt | NMI enable/disable, VALID polling, AMD Errata #420 | Implemented |
+| `ibs_period_test` | `[TC-MSR]` Config | Sampling period encoding and rollover (Fetch and Op) | Implemented |
+| `ibs_routing_test` | `[TC-INT]` Config | Enable/disable bits, count-control, global IBS CTL | Implemented |
+| `ibs_data_accuracy_test` | `[TC-DATA]` Data | DataSrc encodings, Op Data fields, address registers | Implemented |
+| `ibs_smp_test` | `[TC-SMP]` SMP | Per-CPU MSR isolation, concurrent sampling, migration | Implemented |
+| `ibs_stress_test` | `[TC-STR]` Stress | Rapid enable/disable (1000×), period changes, 60 s load | Implemented |
+| `ibs_l3miss_test` | `[TC-DATA]` Filter | L3MissOnly filtering in Fetch and Op (Zen 4+ only) | Implemented |
+| `ibs_swfilt_test` | `[TC-API]` Filter | Software filter bits (exclude_user/kernel/hv) via rdmsr/wrmsr | Implemented |
+| `ibs_ioctl_test` | `[TC-API]` API | Kernel ioctl API | **Placeholder** — kernel-side not yet implemented |
+| `ibs_unit_field_masks_test` | `[TC-UNIT-MASK]` Unit | Bit-mask and MSR address constants vs AMD PPR | Implemented |
+| `ibs_unit_helpers_test` | `[TC-UNIT-HELP]` Unit | MaxCnt get/set/period helpers; round-trip 0..0xFFFF | Implemented |
+| `ibs_unit_datasrc_test` | `[TC-UNIT-DSRC]` Unit | DataSrc 5-bit extraction; shift-6 regression guard | Implemented |
+| `ibs_unit_cpuid_parse_test` | `[TC-UNIT-CPUID]` Unit | family/model/stepping parse; Zen 3/4/5 detection | Implemented |
+| `ibs_unit_op_ext_maxcnt_test` | `[TC-UNIT-EXT]` Unit | 23-bit extended MaxCnt (Zen 2+) get/set/round-trip | Implemented |
+| `ibs_unit_feature_flags_test` | `[TC-UNIT-FEAT]` Unit | CPUID 0x8000001B feature-bit positions and accessors | Implemented |
+| `ibs_cpuctl_access_test` | `[TC-CPUCTL]` Driver | `/dev/cpuctl<N>` open, RDMSR/WRMSR/CPUID via ioctl | Implemented |
+| `ibs_access_control_test` | `[TC-ACCTL]` Security | Non-root denied; root permitted (fork+setuid pattern) | Implemented |
+| `ibs_invalid_input_test` | `[TC-INV]` Robustness | Bad MSR numbers, NULL argp, unknown ioctl; no panic | Implemented |
+| `ibs_robustness_test` | `[TC-ROB]` Robustness | Kernel survival: reserved bits, fork, affinity; NMI flood placeholder | Partial (2 placeholders) |
+| `ibs_concurrency_test` | `[TC-CON]` Concurrency | Multiprocess MSR access; signal storm under sampling | Implemented |
 
 ---
 

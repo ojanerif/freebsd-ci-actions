@@ -77,7 +77,7 @@ This split is the prerequisite for all unit tests below.
 
 ---
 
-### File: `ibs_unit_field_masks_test.c`   [TC-UNIT]
+### File: `ibs_unit_field_masks_test.c`   [TC-UNIT-MASK] ✅ Implemented
 
 Verify every constant in `ibs_utils.h` / `ibs_decode.h` matches the AMD PPR.
 No hardware.  All cases run on any architecture.
@@ -96,7 +96,7 @@ No hardware.  All cases run on any architecture.
 
 ---
 
-### File: `ibs_unit_helpers_test.c`   [TC-UNIT]
+### File: `ibs_unit_helpers_test.c`   [TC-UNIT-HELP] ✅ Implemented
 
 Test `ibs_get_maxcnt`, `ibs_set_maxcnt`, and `ibs_maxcnt_to_period` (the
 last function needs to be added to `ibs_decode.h`).
@@ -120,7 +120,7 @@ last function needs to be added to `ibs_decode.h`).
 
 ---
 
-### File: `ibs_unit_datasrc_test.c`   [TC-UNIT]
+### File: `ibs_unit_datasrc_test.c`   [TC-UNIT-DSRC] ✅ Implemented
 
 Test DataSrc field extraction from `MSR_IBS_OP_DATA2`.  These are pure
 bit-field operations; no hardware needed.
@@ -146,7 +146,7 @@ where result = `((op_data2 & IBS_DATA_SRC_HI) >> 6) << 3 | (op_data2 & IBS_DATA_
 
 ---
 
-### File: `ibs_unit_cpuid_parse_test.c`   [TC-UNIT]
+### File: `ibs_unit_cpuid_parse_test.c`   [TC-UNIT-CPUID] ✅ Implemented
 
 Extract CPU family/model/stepping parsing logic from `cpu_is_zen4`,
 `cpu_is_zen5`, `cpu_get_family` into a pure helper:
@@ -172,7 +172,7 @@ Unit test against known EAX values from AMD PPR.
 
 ---
 
-### File: `ibs_unit_op_ext_maxcnt_test.c`   [TC-UNIT]
+### File: `ibs_unit_op_ext_maxcnt_test.c`   [TC-UNIT-EXT] ✅ Implemented
 
 Test the Zen 2+ extended MaxCnt field in IBSOPCTL (bits 26:20).
 
@@ -195,7 +195,7 @@ where full_maxcnt = base[15:0] | (ext[26:20] << 16) — a 23-bit value.
 
 ---
 
-### File: `ibs_unit_feature_flags_test.c`   [TC-UNIT]
+### File: `ibs_unit_feature_flags_test.c`   [TC-UNIT-FEAT] ✅ Implemented
 
 Verify IBS CPUID feature flag bit positions and combinations.
 
@@ -244,7 +244,7 @@ These count toward the 20% as-is (no changes needed):
 
 ### New integration tests to add
 
-#### File: `ibs_cpuctl_access_test.c`   [TC-INT]
+#### File: `ibs_cpuctl_access_test.c`   [TC-CPUCTL] ✅ Implemented
 
 Tests the cpuctl driver interface itself, not IBS hardware.
 
@@ -256,7 +256,7 @@ Tests the cpuctl driver interface itself, not IBS hardware.
 | `ibs_cpuctl_cpuid_ibs_leaf` | CPUCTL_CPUID with leaf 0x8000001B returns; result may be zero on non-IBS CPU (skip), non-zero on IBS CPU |
 | `ibs_cpuctl_cpuid_basic_leaf` | CPUCTL_CPUID leaf 0x0 always succeeds; verify max_leaf >= 1 |
 
-#### File: `ibs_access_control_test.c`   [TC-INT]
+#### File: `ibs_access_control_test.c`   [TC-ACCTL] ✅ Implemented
 
 | Test case | What is checked |
 |---|---|
@@ -265,7 +265,7 @@ Tests the cpuctl driver interface itself, not IBS hardware.
 | `ibs_nonroot_cpuctl_open` | As unprivileged user: open("/dev/cpuctl0", O_RDWR) returns EACCES |
 | `ibs_root_msr_accessible` | As root: read MSR_IBS_FETCH_CTL returns 0 (or ENODEV on non-IBS CPU — skip) |
 
-#### File: `ibs_invalid_input_test.c`   [TC-INT]
+#### File: `ibs_invalid_input_test.c`   [TC-INV] ✅ Implemented
 
 | Test case | What is checked |
 |---|---|
@@ -302,11 +302,11 @@ A SKIP is acceptable; a crash or watchdog trip is a hard failure.
 
 | Test case | File | What is tested |
 |---|---|---|
-| `ibs_robustness_nmi_flood` | `ibs_robustness_test.c` | MaxCnt=1 (16-cycle period), Fetch+Op both enabled 5 s; NMI storm must not trigger watchdog or panic |
-| `ibs_robustness_all_cpus_nmi_flood` | same | One thread per CPU all flooding simultaneously; system must remain responsive |
-| `ibs_robustness_reserved_bits_with_enable` | same | Write 0xFFFFFFFFFFFFFFFF to IBSFETCHCTL and IBSOPCTL (enable bits set); kernel must not forward #GP as panic; verify EFAULT/EIO or readback shows only defined bits |
-| `ibs_robustness_fork_under_sampling` | same | Enable IBS Op in parent, fork(), child disables IBS and exits; parent's MSR state must be unchanged |
-| `ibs_robustness_rapid_affinity_switch` | same | Enable IBS Fetch on CPU 0, migrate thread rapidly across all CPUs; verify no cross-CPU state bleed |
+| `ibs_robustness_nmi_flood` [TC-ROB-01] | `ibs_robustness_test.c` | MaxCnt=1 (16-cycle period), Fetch+Op both enabled 5 s; NMI storm must not trigger watchdog or panic — **PLACEHOLDER: skips until hwpmc IBS NMI handler verified active** |
+| `ibs_robustness_all_cpus_nmi_flood` [TC-ROB-02] | same | One thread per CPU all flooding simultaneously — **PLACEHOLDER: same prerequisite as TC-ROB-01** |
+| `ibs_robustness_reserved_bits_with_enable` [TC-ROB-03] | same | Write 0xFFFFFFFFFFFFFFFF to IBSFETCHCTL (enable bits set); kernel must not forward #GP as panic; verify EFAULT/EIO or readback shows only defined bits — ✅ Implemented |
+| `ibs_robustness_fork_under_sampling` [TC-ROB-04] | same | Enable IBS Fetch on CPU 0, fork(), child pins CPU 1 and clears that CPU's IBS, exits; parent CPU 0 MSR state must be unchanged — ✅ Implemented |
+| `ibs_robustness_rapid_affinity_switch` [TC-ROB-05] | same | Enable IBS Fetch on CPU 0, migrate thread across all CPUs; verify no cross-CPU state bleed — ✅ Implemented |
 
 #### Wrong architecture / non-AMD CI job
 
@@ -319,8 +319,8 @@ A SKIP is acceptable; a crash or watchdog trip is a hard failure.
 
 | Test case | File | What is tested |
 |---|---|---|
-| `ibs_concurrent_multiprocess` | `ibs_concurrency_test.c` | fork() N children (one per CPU), each opens `/dev/cpuctl<N>` and hammers its MSRs; all must exit 0 — no cross-process fd corruption |
-| `ibs_signal_storm_under_sampling` | same | Enable IBS Op (short period) + send SIGALRM at 1 kHz from second thread; neither signal handler nor NMI path should SIGSEGV |
+| `ibs_concurrent_multiprocess` [TC-CON-01] | `ibs_concurrency_test.c` | fork() N children (one per CPU), each opens `/dev/cpuctl<N>` and hammers its MSRs; all must exit 0 — ✅ Implemented |
+| `ibs_signal_storm_under_sampling` [TC-CON-02] | same | Enable IBS Op + SIGALRM at 1 kHz from second thread; no SIGSEGV or crash — ✅ Implemented |
 
 ---
 
@@ -328,10 +328,10 @@ A SKIP is acceptable; a crash or watchdog trip is a hard failure.
 
 | Tier | Target tests | Status |
 |---|---|---|
-| Unit (70%) | ~65 | 0 written — all TODO |
-| Integration (20%) | ~18 | ~14 existing + 4 new TODO |
-| E2E (10%) | ~9 | ~7 existing + 2–3 new TODO |
-| **Total** | **~92** | **~21 existing** |
+| Unit (70%) | ~65 | 50 written — `ibs_unit_field_masks_test` (9), `ibs_unit_helpers_test` (14), `ibs_unit_datasrc_test` (10), `ibs_unit_cpuid_parse_test` (11), `ibs_unit_op_ext_maxcnt_test` (7), `ibs_unit_feature_flags_test` (10); `ibs_decode.h` prerequisite split done |
+| Integration (20%) | ~18 | ~14 existing + 16 new — `ibs_cpuctl_access_test` (5 / TC-CPUCTL), `ibs_access_control_test` (4 / TC-ACCTL), `ibs_invalid_input_test` (7 / TC-INV) |
+| E2E (10%) | ~9 | ~7 existing + 7 new — `ibs_robustness_test` (3 impl + 2 placeholder / TC-ROB), `ibs_concurrency_test` (2 / TC-CON) |
+| **Total** | **~92** | **~73 written** (~21 pre-existing + 50 unit + 16 integration + 7 E2E new) |
 
 ---
 
