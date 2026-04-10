@@ -42,6 +42,37 @@ Tests live in `tests/sys/amd/ibs/` and are built with the FreeBSD ATF
 
 ---
 
+## Test Summary
+
+| Test ID | File | Category | Status | Expected Result |
+|---|---|---|---|---|
+| TC-IBS-MSR-01 | `ibs_msr_test` | Smoke | Implemented | Fetch CTL MSR reads back written value; zero-write round-trips cleanly |
+| TC-IBS-DET-01 | `ibs_detect_test` | Detection | Implemented | Feature bits reported match CPUID Fn8000_0001_ECX and Fn8000_001B |
+| TC-IBS-API-01 | `ibs_api_test` | API | Implemented | Writable fields preserved; reserved bits not silently accepted |
+| TC-IBS-CPU-01 | `ibs_cpu_test` | Detection | Implemented | Family/model correctly decoded for all Zen generations |
+| TC-IBS-INT-01 | `ibs_interrupt_test` | Interrupt | Implemented | VALID bit set after sampling period; no spurious or missed NMIs |
+| TC-IBS-CFG-01 | `ibs_period_test` | Config | Implemented | Period round-trips across full 0–0xFFFF MaxCnt range |
+| TC-IBS-RTG-01 | `ibs_routing_test` | Config | Implemented | Enable/disable toggles take effect; global CTL gates both samplers |
+| TC-IBS-DAT-01 | `ibs_data_accuracy_test` | Data | Implemented | DataSrc, Op Data, and address fields decode to expected values |
+| TC-IBS-SMP-01 | `ibs_smp_test` | SMP | Implemented | Each CPU's MSRs are independent; thread migration causes no corruption |
+| TC-IBS-STR-01 | `ibs_stress_test` | Stress | Implemented | No error, hang, or MSR corruption after 1000 rapid cycles |
+| TC-IBS-FLT-01 | `ibs_l3miss_test` | Filter | Implemented | L3MissOnly bit accepted and read back; non-Zen-4 skipped cleanly |
+| TC-IBS-SWF-01 | `ibs_swfilt_test` | Filter | Implemented | Filter bits round-trip through MSR; combined settings preserved |
+| TC-IBS-IOC-01 | `ibs_ioctl_test` | API | Planned | IBS caps and period set/get succeed via hwpmc ioctl interface |
+| TC-IBS-UNIT-01 | `ibs_unit_field_masks_test` | Unit | Implemented | All constants match AMD PPR values exactly |
+| TC-IBS-UNIT-02 | `ibs_unit_helpers_test` | Unit | Implemented | Helpers encode and decode every value in the 16-bit range |
+| TC-IBS-UNIT-03 | `ibs_unit_datasrc_test` | Unit | Implemented | Correct extraction; shift-6 bug cannot regress |
+| TC-IBS-UNIT-04 | `ibs_unit_cpuid_parse_test` | Unit | Implemented | Correct family/model/stepping for all tested CPUID values |
+| TC-IBS-UNIT-05 | `ibs_unit_op_ext_maxcnt_test` | Unit | Implemented | Full 23-bit range round-trips without truncation |
+| TC-IBS-UNIT-06 | `ibs_unit_feature_flags_test` | Unit | Implemented | Feature flag accessors return correct values for all known bit positions |
+| TC-IBS-DRV-01 | `ibs_cpuctl_access_test` | Driver | Implemented | All three ioctl operations succeed and return expected data |
+| TC-IBS-SEC-01 | `ibs_access_control_test` | Security | Implemented | Non-root gets EPERM; root succeeds |
+| TC-IBS-INV-01 | `ibs_invalid_input_test` | Robustness | Implemented | Errors returned for all invalid inputs; kernel does not panic |
+| TC-IBS-ROB-01 | `ibs_robustness_test` | Robustness | Partial (2 placeholders) | Kernel survives adversarial MSR writes and process churn |
+| TC-IBS-CON-01 | `ibs_concurrency_test` | Concurrency | Implemented | No race, data corruption, or crash under concurrent MSR access |
+
+---
+
 ## Overview
 
 IBS is an AMD hardware profiling feature available on Family 10h (K10) and
@@ -109,7 +140,7 @@ pass-rate calculation.
 
 ## Test Files and Cases
 
-### ibs_msr_test
+### TC-IBS-MSR-01 — ibs_msr_test
 
 **Category:** `[TC-MSR]` CRITICAL  
 **Source:** `ibs_msr_test.c`
@@ -129,7 +160,7 @@ Smoke-test that MSR read/write works end-to-end through the `cpuctl` driver.
 
 ---
 
-### ibs_detect_test
+### TC-IBS-DET-01 — ibs_detect_test
 
 **Category:** `[TC-DET]` CRITICAL  
 **Source:** `ibs_detect_test.c`
@@ -181,7 +212,7 @@ sampling.
 
 ---
 
-### ibs_cpu_test
+### TC-IBS-CPU-01 — ibs_cpu_test
 
 **Category:** `[TC-DET]` CRITICAL  
 **Source:** `ibs_cpu_test.c`
@@ -222,7 +253,7 @@ bare-metal configurations that don't expose this leaf).
 
 ---
 
-### ibs_api_test
+### TC-IBS-API-01 — ibs_api_test
 
 **Category:** `[TC-API]` MEDIUM  
 **Source:** `ibs_api_test.c`
@@ -265,7 +296,7 @@ and only preserves defined fields (MaxCnt, enable, CntCtl, etc.).
 
 ---
 
-### ibs_interrupt_test
+### TC-IBS-INT-01 — ibs_interrupt_test
 
 **Category:** `[TC-INT]` HIGH  
 **Source:** `ibs_interrupt_test.c`
@@ -309,7 +340,7 @@ the VAL bits never become set.
 
 ---
 
-### ibs_period_test
+### TC-IBS-CFG-01 — ibs_period_test
 
 **Category:** `[TC-MSR]` CRITICAL  
 **Source:** `ibs_period_test.c`
@@ -358,7 +389,7 @@ test values.
 
 ---
 
-### ibs_routing_test
+### TC-IBS-RTG-01 — ibs_routing_test
 
 **Category:** `[TC-INT]` HIGH  
 **Source:** `ibs_routing_test.c`
@@ -412,7 +443,7 @@ restricted-access environments where the hypervisor does not expose this MSR.
 
 ---
 
-### ibs_data_accuracy_test
+### TC-IBS-DAT-01 — ibs_data_accuracy_test
 
 **Category:** `[TC-DATA]` HIGH  
 **Source:** `ibs_data_accuracy_test.c`
@@ -505,7 +536,7 @@ sampling (graceful skip with message).
 
 ---
 
-### ibs_smp_test
+### TC-IBS-SMP-01 — ibs_smp_test
 
 **Category:** `[TC-SMP]` HIGH  
 **Source:** `ibs_smp_test.c`
@@ -558,7 +589,7 @@ a thread to a different CPU does not transfer IBS state from the source CPU.
 
 ---
 
-### ibs_stress_test
+### TC-IBS-STR-01 — ibs_stress_test
 
 **Category:** `[TC-STR]` MEDIUM  
 **Source:** `ibs_stress_test.c`
@@ -616,7 +647,7 @@ under concurrent load — no corrupted reads or descriptor errors.
 
 ---
 
-### ibs_l3miss_test
+### TC-IBS-FLT-01 — ibs_l3miss_test
 
 **Category:** `[TC-DATA]` HIGH  
 **Source:** `ibs_l3miss_test.c`  
@@ -674,7 +705,7 @@ older hardware).
 
 ---
 
-### ibs_ioctl_test
+### TC-IBS-IOC-01 — ibs_ioctl_test
 
 **Category:** `[TC-API]` MEDIUM  
 **Source:** `ibs_ioctl_test.c`
@@ -694,7 +725,7 @@ checks the result.
 
 ---
 
-### ibs_swfilt_test
+### TC-IBS-SWF-01 — ibs_swfilt_test
 
 **Category:** `[TC-API]` MEDIUM  
 **Source:** `ibs_swfilt_test.sh` (ATF shell test)
@@ -713,8 +744,8 @@ generates samples.  These bits are stored in the IBS Fetch/Op control MSRs.
 Sets `IbsFetchKernelSpace = 1, IbsFetchUserSpace = 0` and verifies that the
 bit survives a write-read cycle.
 
-**Skip condition:** `rdmsr`/`wrmsr` userland tools not available, or IBS MSR
-access denied.
+**Skip condition:** CPU does not support IBS (CPUID Fn8000_0001_ECX bit 10
+not set), or `cpuctl` device unavailable.
 
 #### `ibs_swfilt_exclude_kernel`
 
@@ -738,7 +769,7 @@ available.
 
 ---
 
-### ibs_unit_field_masks_test
+### TC-IBS-UNIT-01 — ibs_unit_field_masks_test
 
 **Category:** `[TC-UNIT-MASK]` LOW — 100% pass threshold  
 **Source:** `ibs_unit_field_masks_test.c`  
@@ -761,7 +792,7 @@ the AMD PPR.
 
 ---
 
-### ibs_unit_helpers_test
+### TC-IBS-UNIT-02 — ibs_unit_helpers_test
 
 **Category:** `[TC-UNIT-HELP]` LOW  
 **Source:** `ibs_unit_helpers_test.c`  
@@ -789,7 +820,7 @@ from `ibs_decode.h`.
 
 ---
 
-### ibs_unit_datasrc_test
+### TC-IBS-UNIT-03 — ibs_unit_datasrc_test
 
 **Category:** `[TC-UNIT-DSRC]` LOW  
 **Source:** `ibs_unit_datasrc_test.c`  
@@ -815,7 +846,7 @@ Includes a regression test for the shift-3 bug (TC-UNIT-DSRC-10).
 
 ---
 
-### ibs_unit_cpuid_parse_test
+### TC-IBS-UNIT-04 — ibs_unit_cpuid_parse_test
 
 **Category:** `[TC-UNIT-CPUID]` LOW  
 **Source:** `ibs_unit_cpuid_parse_test.c`  
@@ -841,7 +872,7 @@ values from the AMD PPR.
 
 ---
 
-### ibs_unit_op_ext_maxcnt_test
+### TC-IBS-UNIT-05 — ibs_unit_op_ext_maxcnt_test
 
 **Category:** `[TC-UNIT-EXT]` LOW  
 **Source:** `ibs_unit_op_ext_maxcnt_test.c`  
@@ -862,7 +893,7 @@ extended MaxCnt helpers for Zen 2+ processors.
 
 ---
 
-### ibs_unit_feature_flags_test
+### TC-IBS-UNIT-06 — ibs_unit_feature_flags_test
 
 **Category:** `[TC-UNIT-FEAT]` LOW  
 **Source:** `ibs_unit_feature_flags_test.c`  
