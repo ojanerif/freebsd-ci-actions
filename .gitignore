@@ -1,4 +1,9 @@
-run-local.sh
+# Reference FreeBSD source tree (symlink → ../freebsd-experimental)
+freebsd-src
+
+# Build working directory (artifacts, kyua output, logs)
+work/
+
 # BSD make build artifacts
 *.o
 *.d
@@ -8,19 +13,11 @@ run-local.sh
 obj/
 obj.*
 
-# Compiled ATF test binaries
-tests/sys/amd/ibs/ibs_api_test
-tests/sys/amd/ibs/ibs_cpu_test
-tests/sys/amd/ibs/ibs_data_accuracy_test
-tests/sys/amd/ibs/ibs_detect_test
-tests/sys/amd/ibs/ibs_interrupt_test
-tests/sys/amd/ibs/ibs_ioctl_test
-tests/sys/amd/ibs/ibs_l3miss_test
-tests/sys/amd/ibs/ibs_msr_test
-tests/sys/amd/ibs/ibs_period_test
-tests/sys/amd/ibs/ibs_routing_test
-tests/sys/amd/ibs/ibs_smp_test
-tests/sys/amd/ibs/ibs_stress_test
+# Compiled ATF test binaries and debug artifacts
+tests/sys/amd/ibs/ibs_*test
+tests/sys/amd/ibs/ibs_*test.debug
+tests/sys/amd/ibs/ibs_*test.full
+tests/sys/amd/ibs/ibs_*test.pieo
 
 # ATF / kyua test output
 kyua.db
@@ -40,7 +37,7 @@ atf-work-*/
 # Core dumps
 *.core
 
-# FreeBSD source tree cloned by run.sh — not tracked here
-freebsd-src/
-
 .claude/
+
+# Personal documentation — local only, never pushed to any remote
+ojanerif-docs/

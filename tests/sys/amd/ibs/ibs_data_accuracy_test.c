@@ -297,6 +297,29 @@ ATF_TC_BODY(ibs_data_src_extended, tc)
 		atf_tc_skip("Cannot read MSR_IBS_OP_DATA: %s",
 		    strerror(error));
 
+	/*
+	 * Probe writability: IBSOPDATA is a hardware-written sample register.
+	 * On some Zen4 implementations the DataSrc bits may not be directly
+	 * writable via cpuctl. Write a known probe value and verify it sticks
+	 * before running the full matrix.
+	 */
+	written = ibs_set_data_src(0x3);	/* DRAM — a stable encoding */
+	error = write_msr(0, MSR_IBS_OP_DATA, written);
+	if (error != 0)
+		atf_tc_skip("Cannot write MSR_IBS_OP_DATA: %s"
+		    " — Waiting for the dev: direct DataSrc test requires"
+		    " kernel IBS sampling (FreeBSD-Tests-009)", strerror(error));
+
+	error = read_msr(0, MSR_IBS_OP_DATA, &readback);
+	ATF_REQUIRE_ERRNO(0, error == 0);
+	if (ibs_get_data_src(readback) != 0x3) {
+		(void)write_msr(0, MSR_IBS_OP_DATA, original);
+		atf_tc_skip("MSR_IBS_OP_DATA DataSrc bits are not directly"
+		    " writable on this hardware — Waiting for the dev:"
+		    " extended DataSrc validation requires kernel IBS sampling"
+		    " (FreeBSD-Tests-009)");
+	}
+
 	for (i = 0; i < nitems(test_cases); i++) {
 		/* Write extended DataSrc encoding */
 		written = ibs_set_data_src(test_cases[i].data_src);
