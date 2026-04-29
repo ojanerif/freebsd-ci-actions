@@ -1,5 +1,8 @@
-# Reference FreeBSD source tree (symlink → ../freebsd-experimental)
+# FreeBSD source tree (clone of ojanerif/freebsd-src)
 freebsd-src
+
+# Local dev docs (never committed)
+dev-docs/
 
 # Build working directory (artifacts, kyua output, logs)
 work/
