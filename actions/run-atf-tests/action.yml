@@ -1,0 +1,73 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# run-atf-tests — Composite action: load hwpmc.ko, run Kyua test suite,
+# emit JUnit XML + HTML report, unload module.
+
+name: 'Run IBS ATF Tests'
+description: 'Loads hwpmc.ko, runs kyua against the IBS Kyuafile, generates JUnit XML and HTML report.'
+
+inputs:
+  tests_dir:
+    description: 'Path to the directory containing Kyuafile'
+    required: false
+    default: 'tests/sys/amd/ibs'
+  srcdir:
+    description: 'Path to the FreeBSD source tree (for building test binaries)'
+    required: false
+    default: 'freebsd-src'
+  kernconf:
+    description: 'Kernel config name (informational)'
+    required: false
+    default: 'AMD_IBS'
+  timeout_minutes:
+    description: 'Maximum minutes for the full test run'
+    required: false
+    default: '15'
+
+outputs:
+  test_status:
+    description: '"passed", "failed", or "error"'
+    value: ${{ steps.run.outputs.test_status }}
+  results_path:
+    description: 'Path to the JUnit XML results file'
+    value: ${{ steps.run.outputs.results_path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build IBS test binaries
+      id: build-tests
+      shell: sh
+      env:
+        TESTS_DIR: ${{ inputs.tests_dir }}
+        SRCDIR:    ${{ inputs.srcdir }}
+      run: |
+        ${{ github.action_path }}/scripts/build-tests.sh
+
+    - name: Run IBS ATF tests
+      id: run
+      shell: sh
+      env:
+        TESTS_DIR:       ${{ inputs.tests_dir }}
+        TIMEOUT_MINUTES: ${{ inputs.timeout_minutes }}
+      run: |
+        ${{ github.action_path }}/scripts/run-tests.sh
+
+    - name: Upload JUnit XML results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kyua-junit-xml
+        path: ${{ steps.run.outputs.results_path }}
+        retention-days: 30
+        if-no-files-found: warn
+
+    - name: Upload HTML report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kyua-html-report
+        path: kyua-report/
+        retention-days: 30
+        if-no-files-found: warn

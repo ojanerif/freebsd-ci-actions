@@ -1,0 +1,75 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# setup-freebsd-build — Composite action: configure build environment
+# and collect system diagnostic info.
+
+name: 'Setup FreeBSD Build Environment'
+description: 'Set GITHUB_ENV variables for the build, verify Linuxulator tools, collect dmesg/sysctl/kernel-config artifacts.'
+
+inputs:
+  srcdir:
+    description: 'Path to the FreeBSD source tree checkout'
+    required: false
+    default: 'freebsd-src'
+  kernconf:
+    description: 'Kernel configuration name (e.g. AMD_IBS)'
+    required: false
+    default: 'AMD_IBS'
+  objdir:
+    description: 'MAKEOBJDIRPREFIX for kernel build objects'
+    required: false
+    default: '/tmp/obj'
+
+runs:
+  using: composite
+  steps:
+    - name: Verify build tools
+      shell: sh
+      run: |
+        # Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+        set -e
+        echo "=== FreeBSD build environment ==="
+        uname -a
+        echo "srcdir : ${{ inputs.srcdir }}"
+        echo "kernconf: ${{ inputs.kernconf }}"
+        echo "objdir : ${{ inputs.objdir }}"
+        command -v gmake  || echo "WARNING: gmake not found"
+        command -v kyua   || echo "WARNING: kyua not found"
+        ls /dev/cpuctl0   2>/dev/null && echo "cpuctl0 present" || echo "WARNING: /dev/cpuctl0 missing"
+
+    - name: Export build environment
+      shell: sh
+      run: |
+        # Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+        printf 'FBSD_SRCDIR=%s\n'       "${{ inputs.srcdir }}"    >> "$GITHUB_ENV"
+        printf 'KERNCONF=%s\n'          "${{ inputs.kernconf }}"   >> "$GITHUB_ENV"
+        printf 'MAKEOBJDIRPREFIX=%s\n'  "${{ inputs.objdir }}"    >> "$GITHUB_ENV"
+
+    - name: Collect system info
+      shell: sh
+      run: |
+        # Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+        mkdir -p _sysinfo
+        dmesg > _sysinfo/dmesg.txt 2>/dev/null || true
+        uname -a > _sysinfo/system.txt
+        sysctl -a 2>/dev/null | grep -E '^(hw\.|kern\.osrelease|kern\.version)' \
+          > _sysinfo/sysctl.txt || true
+        if [ -c /dev/cpuctl0 ]; then
+          sysctl -n hw.cpu_vendor >> _sysinfo/system.txt 2>/dev/null || true
+          sysctl -n hw.model      >> _sysinfo/system.txt 2>/dev/null || true
+        fi
+        # Kernel config if present after buildkernel
+        for p in /boot/kernel/kernel.conf \
+                 /usr/obj/*/sys/${{ inputs.kernconf }}/kernel.conf; do
+          [ -f "$p" ] && cp "$p" _sysinfo/kernel.conf && break
+        done || true
+
+    - name: Upload system info artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: system-info
+        path: _sysinfo/
+        retention-days: 30
+        if-no-files-found: warn

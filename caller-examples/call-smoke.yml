@@ -1,0 +1,19 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# call-smoke.yml — Example smoke-test caller: runs on every push to main.
+# Quick sanity check — same pipeline, no path filter.
+
+name: IBS Smoke Test
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    uses: ojanerif/freebsd-ci-actions/.github/workflows/ibs-full-test.yml@main
+    with:
+      kernconf: AMD_IBS

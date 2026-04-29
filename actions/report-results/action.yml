@@ -1,0 +1,54 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# report-results — Composite action: parse JUnit XML and post a Markdown
+# summary to the GitHub Actions workflow run page.
+
+name: 'Report Test Results'
+description: 'Parses JUnit XML, posts a pass/fail/skip summary, and uploads result artifacts.'
+
+inputs:
+  results_xml:
+    description: 'Path to the JUnit XML file produced by kyua report-junit'
+    required: false
+    default: 'ibs-results.xml'
+  report_html_dir:
+    description: 'Path to the kyua HTML report directory'
+    required: false
+    default: 'kyua-report'
+  build_status:
+    description: 'Build status from the build-kernel action ("success"/"failure"/"skipped")'
+    required: false
+    default: 'unknown'
+  test_status:
+    description: 'Test status from the run-atf-tests action ("passed"/"failed"/"error"/"skipped")'
+    required: false
+    default: 'unknown'
+
+runs:
+  using: composite
+  steps:
+    - name: Generate workflow summary
+      shell: sh
+      env:
+        RESULTS_XML:   ${{ inputs.results_xml }}
+        BUILD_STATUS:  ${{ inputs.build_status }}
+        TEST_STATUS:   ${{ inputs.test_status }}
+      run: |
+        ${{ github.action_path }}/scripts/generate-report.sh
+
+    - name: Upload JUnit XML artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ibs-junit-results
+        path: ${{ inputs.results_xml }}
+        retention-days: 30
+        if-no-files-found: warn
+
+    - name: Upload HTML report artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ibs-html-report
+        path: ${{ inputs.report_html_dir }}/
+        retention-days: 30
+        if-no-files-found: warn

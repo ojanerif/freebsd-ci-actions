@@ -1,0 +1,58 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# build-kernel — Composite action: build the hwpmc kernel module from source.
+
+name: 'Build FreeBSD hwpmc Kernel Module'
+description: 'Builds sys/modules/hwpmc from the checked-out FreeBSD source tree.'
+
+inputs:
+  srcdir:
+    description: 'Path to the FreeBSD source tree checkout'
+    required: false
+    default: 'freebsd-src'
+  kernconf:
+    description: 'Kernel configuration name'
+    required: false
+    default: 'AMD_IBS'
+  objdir:
+    description: 'MAKEOBJDIRPREFIX for build objects'
+    required: false
+    default: '/tmp/obj'
+  parallel_jobs:
+    description: 'Number of parallel make jobs (0 = auto-detect from hw.ncpu)'
+    required: false
+    default: '0'
+  build_timeout:
+    description: 'Maximum seconds allowed for the build (default: 600 = 10 min)'
+    required: false
+    default: '600'
+
+outputs:
+  build_status:
+    description: '"success" or "failure"'
+    value: ${{ steps.build.outputs.build_status }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build hwpmc module
+      id: build
+      shell: sh
+      env:
+        SRCDIR:        ${{ inputs.srcdir }}
+        KERNCONF:      ${{ inputs.kernconf }}
+        MAKEOBJDIRPREFIX: ${{ inputs.objdir }}
+        PARALLEL_JOBS: ${{ inputs.parallel_jobs }}
+        BUILD_TIMEOUT: ${{ inputs.build_timeout }}
+      run: |
+        ${{ github.action_path }}/scripts/build.sh
+
+    - name: Upload build log on failure
+      if: steps.build.outputs.build_status == 'failure'
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-build-log
+        path: _build.log
+        retention-days: 30
+        if-no-files-found: warn

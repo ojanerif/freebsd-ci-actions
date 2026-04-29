@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# call-ibs-full.yml — Example caller workflow for ojanerif/freebsd-src.
+#
+# Copy this file to ojanerif/freebsd-src/.github/workflows/ibs-tests.yml
+# (adjust the 'uses:' ref if you want to pin to a specific tag/SHA).
+
+name: IBS Full Test
+
+on:
+  push:
+    paths:
+      - 'tests/sys/amd/ibs/**'
+      - 'sys/dev/hwpmc/**'
+      - 'sys/amd64/amd64/ibs*'
+      - 'sys/modules/hwpmc/**'
+  workflow_dispatch:
+
+jobs:
+  ibs-tests:
+    uses: ojanerif/freebsd-ci-actions/.github/workflows/ibs-full-test.yml@main
+    with:
+      kernconf: AMD_IBS

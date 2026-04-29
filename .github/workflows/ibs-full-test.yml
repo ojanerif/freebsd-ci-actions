@@ -1,0 +1,83 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# ibs-full-test.yml — Reusable workflow: build hwpmc module, run IBS ATF tests
+#
+# Callers use:
+#   jobs:
+#     ibs:
+#       uses: ojanerif/freebsd-ci-actions/.github/workflows/ibs-full-test.yml@main
+#       with:
+#         kernconf: AMD_IBS
+
+on:
+  workflow_call:
+    inputs:
+      kernconf:
+        description: 'Kernel config name'
+        type: string
+        required: false
+        default: 'AMD_IBS'
+      srcdir:
+        description: 'Relative path for the FreeBSD source checkout'
+        type: string
+        required: false
+        default: 'freebsd-src'
+      objdir:
+        description: 'MAKEOBJDIRPREFIX for kernel build artifacts'
+        type: string
+        required: false
+        default: '/tmp/obj'
+
+jobs:
+  build-and-test:
+    name: Build + IBS Test
+    runs-on: [self-hosted, freebsd, amd-ibs]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout CI actions repo
+        uses: actions/checkout@v4
+        with:
+          repository: ojanerif/freebsd-ci-actions
+          path: ci-actions
+
+      - name: Checkout FreeBSD source
+        uses: actions/checkout@v4
+        with:
+          repository: ojanerif/freebsd-src
+          path: ${{ inputs.srcdir }}
+
+      - name: Setup build environment
+        uses: ./ci-actions/actions/setup-freebsd-build
+        with:
+          srcdir:   ${{ inputs.srcdir }}
+          kernconf: ${{ inputs.kernconf }}
+          objdir:   ${{ inputs.objdir }}
+
+      - name: Build hwpmc kernel module
+        id: build
+        uses: ./ci-actions/actions/build-kernel
+        with:
+          srcdir:        ${{ inputs.srcdir }}
+          kernconf:      ${{ inputs.kernconf }}
+          objdir:        ${{ inputs.objdir }}
+          build_timeout: '600'
+
+      - name: Run IBS ATF tests
+        id: test
+        if: steps.build.outputs.build_status == 'success'
+        uses: ./ci-actions/actions/run-atf-tests
+        with:
+          tests_dir:  ci-actions/tests/sys/amd/ibs
+          srcdir:     ${{ inputs.srcdir }}
+          kernconf:   ${{ inputs.kernconf }}
+
+      - name: Report results
+        if: always()
+        uses: ./ci-actions/actions/report-results
+        with:
+          results_xml:     ${{ steps.test.outputs.results_path || 'results.xml' }}
+          report_html_dir: kyua-report
+          build_status:    ${{ steps.build.outputs.build_status || 'skipped' }}
+          test_status:     ${{ steps.test.outputs.test_status   || 'skipped' }}
