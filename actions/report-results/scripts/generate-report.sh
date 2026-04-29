@@ -79,5 +79,6 @@ else
 	printf '> No JUnit XML found at `%s`\n\n' "$RESULTS_XML" >> "$GITHUB_STEP_SUMMARY"
 fi
 
-printf '---\n*Runner: %s | FreeBSD %s*\n' \
+printf '%s\n' "---" >> "$GITHUB_STEP_SUMMARY"
+printf '*Runner: %s | FreeBSD %s*\n' \
 	"$(hostname)" "$(uname -r)" >> "$GITHUB_STEP_SUMMARY"

@@ -28,6 +28,13 @@ fi
 
 export MAKEOBJDIRPREFIX
 
+# Fall back to a workspace-relative path if the configured objdir isn't writable
+if ! mkdir -p "${MAKEOBJDIRPREFIX}" 2>/dev/null; then
+	MAKEOBJDIRPREFIX="${GITHUB_WORKSPACE:-${SRCDIR}/..}/_fbsd-obj"
+	log_info "Falling back to objdir: $MAKEOBJDIRPREFIX"
+	mkdir -p "$MAKEOBJDIRPREFIX"
+fi
+
 log_info "srcdir:        $SRCDIR"
 log_info "kernconf:      $KERNCONF"
 log_info "objdir:        $MAKEOBJDIRPREFIX"
