@@ -81,3 +81,31 @@ jobs:
           report_html_dir: kyua-report
           build_status:    ${{ steps.build.outputs.build_status || 'skipped' }}
           test_status:     ${{ steps.test.outputs.test_status   || 'skipped' }}
+
+      # ------------------------------------------------------------------
+      # Jira integration — steps are no-ops if secrets are not configured.
+      # Set JIRA_BASE_URL, JIRA_USER_EMAIL, JIRA_API_TOKEN in repo secrets.
+      # ------------------------------------------------------------------
+      - name: Jira login
+        if: ${{ secrets.JIRA_API_TOKEN != '' }}
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL:   ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN:  ${{ secrets.JIRA_API_TOKEN }}
+
+      - name: Comment on Jira ticket on failure
+        if: ${{ steps.test.outputs.test_status == 'failed' && secrets.JIRA_API_TOKEN != '' }}
+        uses: atlassian/gajira-comment@v3
+        with:
+          issue: SWLSVROS-6363
+          comment: |
+            ❌ IBS CI failed on FreeBSD runner (`${{ github.ref_name }}`)
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Transition Jira story to Done on success
+        if: ${{ steps.test.outputs.test_status == 'passed' && secrets.JIRA_API_TOKEN != '' }}
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: SWLSVROS-6363
+          transition: "Done"

@@ -121,9 +121,10 @@ mount_if_needed() {
 	fi
 }
 
-mkdir -p /compat/linux/proc /compat/linux/sys /compat/linux/dev/shm
+mkdir -p /compat/linux/proc /compat/linux/sys /compat/linux/dev /compat/linux/dev/shm
 mount_if_needed /compat/linux/proc linprocfs
 mount_if_needed /compat/linux/sys  linsysfs
+mount_if_needed /compat/linux/dev  devfs
 mount_if_needed /compat/linux/dev/shm tmpfs "rw,mode=1777"
 
 # Persist in fstab if not already present
@@ -133,6 +134,7 @@ add_fstab() {
 }
 add_fstab "linprocfs   /compat/linux/proc   linprocfs   rw   0   0"
 add_fstab "linsysfs    /compat/linux/sys    linsysfs    rw   0   0"
+add_fstab "devfs       /compat/linux/dev    devfs        rw   0   0"
 add_fstab "tmpfs       /compat/linux/dev/shm  tmpfs     rw,mode=1777  0  0"
 
 # ---------------------------------------------------------------------------
