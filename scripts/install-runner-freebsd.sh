@@ -136,7 +136,20 @@ add_fstab "linsysfs    /compat/linux/sys    linsysfs    rw   0   0"
 add_fstab "tmpfs       /compat/linux/dev/shm  tmpfs     rw,mode=1777  0  0"
 
 # ---------------------------------------------------------------------------
-# 4. Create runner user
+# 4. Create /bin/bash compatibility symlink
+#
+# run.sh and run-helper.sh inside the runner archive have #!/bin/bash shebangs.
+# FreeBSD installs bash at /usr/local/bin/bash. Without this symlink the
+# runner starts but immediately exits:
+#   run-helper.sh: /bin/bash: bad interpreter: No such file or directory
+# ---------------------------------------------------------------------------
+if [ ! -e /bin/bash ]; then
+	log_info "Creating /bin/bash → /usr/local/bin/bash symlink"
+	ln -s /usr/local/bin/bash /bin/bash
+fi
+
+# ---------------------------------------------------------------------------
+# 5. Create runner user
 # ---------------------------------------------------------------------------
 if ! id "$RUNNER_USER" > /dev/null 2>&1; then
 	log_info "Creating user: $RUNNER_USER"
@@ -149,7 +162,7 @@ fi
 USER_HOME="$(getent passwd "$RUNNER_USER" | cut -d: -f6)"
 
 # ---------------------------------------------------------------------------
-# 5. Nullfs bind: /home/<user> → /usr/home/<user>
+# 6. Nullfs bind: /home/<user> → /usr/home/<user>
 #
 # The Linuxulator follows the base-system symlink /home → /usr/home when
 # resolving process paths. Because /home is a ZFS dataset here (not the
@@ -218,9 +231,15 @@ su -m "$RUNNER_USER" -c \
 
 # ---------------------------------------------------------------------------
 # 9. Install rc.d service
+#
+# Uses daemon(8) to daemonize run.sh with PID tracking as root (gh-runner
+# user cannot write to /var/run or /var/log directly).
 # ---------------------------------------------------------------------------
 RC_SCRIPT="/usr/local/etc/rc.d/gh_runner"
 log_info "Installing rc.d service: $RC_SCRIPT"
+
+touch /var/log/gh-runner.log
+chown "$RUNNER_USER" /var/log/gh-runner.log
 
 cat > "$RC_SCRIPT" << RCEOF
 #!/bin/sh
@@ -234,6 +253,7 @@ name="gh_runner"
 rcvar="gh_runner_enable"
 gh_runner_user="${RUNNER_USER}"
 gh_runner_dir="${RUNNER_DIR}"
+pidfile="/var/run/gh_runner.pid"
 logfile="/var/log/gh-runner.log"
 
 start_cmd="\${name}_start"
@@ -241,22 +261,27 @@ stop_cmd="\${name}_stop"
 status_cmd="\${name}_status"
 
 gh_runner_start() {
-    su -l "\${gh_runner_user}" -c \
-        "cd '\${gh_runner_dir}' && nohup /usr/local/bin/bash run.sh >> '\${logfile}' 2>&1 & echo \$! > /var/run/gh_runner.pid"
-    echo "GitHub Actions runner started."
+    [ -f "\${logfile}" ] || touch "\${logfile}"
+    chown "\${gh_runner_user}" "\${logfile}"
+    /usr/sbin/daemon \
+        -u "\${gh_runner_user}" \
+        -p "\${pidfile}" \
+        -o "\${logfile}" \
+        /bin/bash -c "cd '\${gh_runner_dir}' && exec /bin/bash run.sh"
+    echo "GitHub Actions runner started (pid \$(cat \${pidfile} 2>/dev/null || echo unknown))."
 }
 
 gh_runner_stop() {
-    if [ -f /var/run/gh_runner.pid ]; then
-        kill "\$(cat /var/run/gh_runner.pid)" 2>/dev/null || true
-        rm -f /var/run/gh_runner.pid
+    if [ -f "\${pidfile}" ]; then
+        kill "\$(cat \${pidfile})" 2>/dev/null || true
+        rm -f "\${pidfile}"
     fi
     echo "GitHub Actions runner stopped."
 }
 
 gh_runner_status() {
-    if [ -f /var/run/gh_runner.pid ] && kill -0 "\$(cat /var/run/gh_runner.pid)" 2>/dev/null; then
-        echo "gh_runner is running (pid \$(cat /var/run/gh_runner.pid))"
+    if [ -f "\${pidfile}" ] && kill -0 "\$(cat \${pidfile})" 2>/dev/null; then
+        echo "gh_runner is running (pid \$(cat \${pidfile}))"
     else
         echo "gh_runner is not running"
         return 1
