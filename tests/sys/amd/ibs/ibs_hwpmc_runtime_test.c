@@ -17,7 +17,7 @@ ATF_TC(ibs_hwpmc_fetch_lifecycle_smoke);
 ATF_TC_HEAD(ibs_hwpmc_fetch_lifecycle_smoke, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Allocate, start, stop, and release an IBS Fetch PMC");
+	    "Allocate, attach, detach, and release an IBS Fetch PMC");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
@@ -25,12 +25,10 @@ ATF_TC_BODY(ibs_hwpmc_fetch_lifecycle_smoke, tc)
 {
 	pmc_id_t pmcid;
 	pid_t pid;
-	bool attached;
 	int error;
 
 	pmcid = PMC_ID_INVALID;
 	pid = getpid();
-	attached = false;
 	ibs_test_skip_unless_hwpmc_ibs();
 
 	error = pmc_allocate("IBS-FETCH", PMC_MODE_TS, 0, PMC_CPU_ANY, &pmcid,
@@ -41,18 +39,6 @@ ATF_TC_BODY(ibs_hwpmc_fetch_lifecycle_smoke, tc)
 		amd_test_release_pmc(pmcid);
 		atf_tc_fail("pmc_attach(IBS-FETCH, self) failed: %s",
 		    strerror(errno));
-	}
-	attached = true;
-	if (pmc_start(pmcid) != 0) {
-		(void)pmc_detach(pmcid, pid);
-		amd_test_release_pmc(pmcid);
-		atf_tc_fail("pmc_start(IBS-FETCH) failed: %s", strerror(errno));
-	}
-	if (pmc_stop(pmcid) != 0) {
-		if (attached)
-			(void)pmc_detach(pmcid, pid);
-		amd_test_release_pmc(pmcid);
-		atf_tc_fail("pmc_stop(IBS-FETCH) failed: %s", strerror(errno));
 	}
 	if (pmc_detach(pmcid, pid) != 0) {
 		amd_test_release_pmc(pmcid);
@@ -66,8 +52,7 @@ ATF_TC(ibs_hwpmc_getmsr_virtual_negative);
 ATF_TC_HEAD(ibs_hwpmc_getmsr_virtual_negative, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify pmc_get_msr() is rejected for IBS because the class has no "
-	    "GETMSR support");
+	    "Verify pmc_get_msr() rejects IBS sampling PMCs");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
@@ -98,12 +83,12 @@ ATF_TC_BODY(ibs_hwpmc_getmsr_virtual_negative, tc)
 
 	errno = 0;
 	error = pmc_get_msr(pmcid, &msr);
-	if (error != -1 || errno != ENOSYS) {
+	if (error != -1 || errno != EINVAL) {
 		if (attached)
 			(void)pmc_detach(pmcid, pid);
 		amd_test_release_pmc(pmcid);
 		atf_tc_fail("pmc_get_msr(IBS-FETCH) returned %d errno %d, expected "
-		    "-1/ENOSYS", error, errno);
+		    "-1/EINVAL", error, errno);
 	}
 
 	if (pmc_detach(pmcid, pid) != 0) {

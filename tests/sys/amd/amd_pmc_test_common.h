@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #define	AMD_CPUID_VENDOR_LEAF	0x00000000
+#define	AMD_CPUID_EXT_BASE	0x80000000
 #define	AMD_CPUID_EXT_FEATURES	0x80000001
 
 #define	AMD_CPUID_VENDOR_EBX	0x68747541U /* Auth */
@@ -68,6 +69,12 @@ amd_test_get_ext_features_ecx(uint32_t *ecx)
 {
 	uint32_t regs[4];
 	int error;
+
+	error = amd_test_do_cpuid(AMD_CPUID_EXT_BASE, regs);
+	if (error != 0)
+		return (error);
+	if (regs[0] < AMD_CPUID_EXT_FEATURES)
+		return (ENODEV);
 
 	error = amd_test_do_cpuid(AMD_CPUID_EXT_FEATURES, regs);
 	if (error != 0)

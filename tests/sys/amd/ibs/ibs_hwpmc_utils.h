@@ -6,7 +6,7 @@
  */
 
 #ifndef _IBS_HWPMC_UTILS_H_
-#define _IBS_HWPMC_UTILS_H_
+#define	_IBS_HWPMC_UTILS_H_
 
 #include <sys/pmc.h>
 
