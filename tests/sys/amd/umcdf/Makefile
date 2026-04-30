@@ -12,7 +12,8 @@ TESTSDIR=	${TESTSBASE}/sys/amd/umcdf
 KYUAFILE=	yes
 
 ATF_TESTS_C=	umcdf_cpuid_test \
-		umcdf_df_test
+		umcdf_df_test \
+		umcdf_umc_test
 
 LIBADD+=	pmc
 

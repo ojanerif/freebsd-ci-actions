@@ -4,3 +4,4 @@ test_suite("FreeBSD")
 
 atf_test_program{name="umcdf_cpuid_test", }
 atf_test_program{name="umcdf_df_test", }
+atf_test_program{name="umcdf_umc_test", }
