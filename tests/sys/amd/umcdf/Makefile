@@ -11,7 +11,8 @@ PACKAGE=	tests
 TESTSDIR=	${TESTSBASE}/sys/amd/umcdf
 KYUAFILE=	yes
 
-ATF_TESTS_C=	umcdf_cpuid_test
+ATF_TESTS_C=	umcdf_cpuid_test \
+		umcdf_df_test
 
 LIBADD+=	pmc
 
