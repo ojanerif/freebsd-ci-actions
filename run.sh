@@ -139,6 +139,15 @@ SKIPPED_TESTS=0
 XFAIL_TESTS=0
 BROKEN_TESTS=0
 
+# Remove temp files on exit or interrupt (SIGINT/SIGTERM)
+_ibs_cleanup() {
+    rm -f /tmp/ibs_exit_$$.tmp /tmp/ibs_pass_$$.tmp /tmp/ibs_fail_$$.tmp \
+          /tmp/ibs_skip_$$.tmp /tmp/ibs_xfail_$$.tmp /tmp/ibs_broken_$$.tmp \
+          /tmp/ibs_crit_f_$$.tmp /tmp/ibs_high_p_$$.tmp /tmp/ibs_high_f_$$.tmp \
+          /tmp/ibs_med_p_$$.tmp /tmp/ibs_med_f_$$.tmp
+}
+trap _ibs_cleanup EXIT INT TERM
+
 # Show usage information
 show_usage() {
     cat << EOF
@@ -242,8 +251,10 @@ check_boot_environment() {
     log_info "Checking Boot Environment safety..."
 
     TODAY=$(date +%Y%m%d)
-    if ! bectl list | grep -q "$TODAY"; then
-        log_error "No Boot Environment found for today ($TODAY)"
+    # Accept any backup BE, not just today's — a BE from yesterday is still a valid safety net
+    BE_COUNT=$(bectl list 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')
+    if [ "${BE_COUNT:-0}" -lt 2 ]; then
+        log_error "No backup Boot Environment found (only active BE exists)"
         log_error "Create one first: sudo bectl create dev-backup-$TODAY"
         exit 1
     fi
@@ -646,8 +657,9 @@ run_all_tests() {
 
         HIGH_TOTAL=$((HIGH_PASS + HIGH_FAIL))
         MED_TOTAL=$((MED_PASS + MED_FAIL))
-        HIGH_PASS_PCT=$([ "$HIGH_TOTAL" -gt 0 ] && echo $((HIGH_PASS * 100 / HIGH_TOTAL)) || echo 100)
-        MED_PASS_PCT=$([ "$MED_TOTAL"  -gt 0 ] && echo $((MED_PASS  * 100 / MED_TOTAL))  || echo 100)
+        # -1 = no tests of this severity ran (not the same as 0% pass rate)
+        HIGH_PASS_PCT=$([ "$HIGH_TOTAL" -gt 0 ] && echo $((HIGH_PASS * 100 / HIGH_TOTAL)) || echo -1)
+        MED_PASS_PCT=$([ "$MED_TOTAL"  -gt 0 ] && echo $((MED_PASS  * 100 / MED_TOTAL))  || echo -1)
 
         echo ""
         echo "================================================================="
@@ -663,12 +675,16 @@ run_all_tests() {
         else
             printf "  ${RED}[CRITICAL]${NC}  %d failed    ${RED}FAIL${NC}\n" "$CRIT_FAIL"
         fi
-        if [ "$HIGH_PASS_PCT" -ge 95 ]; then
+        if [ "$HIGH_PASS_PCT" -lt 0 ]; then
+            printf "  ${YELLOW}[HIGH]${NC}      N/A (no HIGH tests ran)\n"
+        elif [ "$HIGH_PASS_PCT" -ge 95 ]; then
             printf "  ${YELLOW}[HIGH]${NC}      %d%% pass rate  ${GREEN}PASS${NC}  (>= 95%% required)\n" "$HIGH_PASS_PCT"
         else
             printf "  ${YELLOW}[HIGH]${NC}      %d%% pass rate  ${RED}FAIL${NC}  (>= 95%% required)\n" "$HIGH_PASS_PCT"
         fi
-        if [ "$MED_PASS_PCT" -ge 80 ]; then
+        if [ "$MED_PASS_PCT" -lt 0 ]; then
+            printf "  ${CYAN}[MEDIUM]${NC}    N/A (no MEDIUM tests ran)\n"
+        elif [ "$MED_PASS_PCT" -ge 80 ]; then
             printf "  ${CYAN}[MEDIUM]${NC}    %d%% pass rate  ${GREEN}PASS${NC}  (>= 80%% required)\n" "$MED_PASS_PCT"
         else
             printf "  ${CYAN}[MEDIUM]${NC}    %d%% pass rate  ${RED}FAIL${NC}  (>= 80%% required)\n" "$MED_PASS_PCT"
@@ -676,20 +692,21 @@ run_all_tests() {
         echo "================================================================="
 
         # Determine overall verdict
+        # -1 means no tests of that severity ran — skip the check for those
         VERDICT_FAIL=0
-        [ "$CRIT_FAIL" -gt 0 ]       && VERDICT_FAIL=1
-        [ "$HIGH_PASS_PCT" -lt 95 ]  && VERDICT_FAIL=1
+        [ "$CRIT_FAIL" -gt 0 ]                                     && VERDICT_FAIL=1
+        [ "$HIGH_PASS_PCT" -ge 0 ] && [ "$HIGH_PASS_PCT" -lt 95 ]  && VERDICT_FAIL=1
 
         if [ "$VERDICT_FAIL" -eq 0 ]; then
-            if [ "$MED_PASS_PCT" -ge 80 ]; then
+            if [ "$MED_PASS_PCT" -lt 0 ] || [ "$MED_PASS_PCT" -ge 80 ]; then
                 log_success "VERDICT: PASS — all criteria met"
             else
                 log_warning "VERDICT: CONDITIONAL — CRITICAL/HIGH passed; MEDIUM below 80%"
             fi
         else
             log_error "VERDICT: FAIL"
-            [ "$CRIT_FAIL" -gt 0 ]      && log_error "  $CRIT_FAIL CRITICAL test(s) failed"
-            [ "$HIGH_PASS_PCT" -lt 95 ] && log_error "  HIGH pass rate ${HIGH_PASS_PCT}% is below the 95% threshold"
+            [ "$CRIT_FAIL" -gt 0 ]                                    && log_error "  $CRIT_FAIL CRITICAL test(s) failed"
+            [ "$HIGH_PASS_PCT" -ge 0 ] && [ "$HIGH_PASS_PCT" -lt 95 ] && log_error "  HIGH pass rate ${HIGH_PASS_PCT}% is below the 95% threshold"
         fi
 
         # Generate saved reports
@@ -725,27 +742,31 @@ run_all_tests() {
             else
                 printf "  [CRITICAL]  %d failed    FAIL\n" "$CRIT_FAIL"
             fi
-            if [ "$HIGH_PASS_PCT" -ge 95 ]; then
+            if [ "$HIGH_PASS_PCT" -lt 0 ]; then
+                printf "  [HIGH]      N/A (no HIGH tests ran)\n"
+            elif [ "$HIGH_PASS_PCT" -ge 95 ]; then
                 printf "  [HIGH]      %d%% pass rate  PASS  (>= 95%% required)\n" "$HIGH_PASS_PCT"
             else
                 printf "  [HIGH]      %d%% pass rate  FAIL  (>= 95%% required)\n" "$HIGH_PASS_PCT"
             fi
-            if [ "$MED_PASS_PCT" -ge 80 ]; then
+            if [ "$MED_PASS_PCT" -lt 0 ]; then
+                printf "  [MEDIUM]    N/A (no MEDIUM tests ran)\n"
+            elif [ "$MED_PASS_PCT" -ge 80 ]; then
                 printf "  [MEDIUM]    %d%% pass rate  PASS  (>= 80%% required)\n" "$MED_PASS_PCT"
             else
                 printf "  [MEDIUM]    %d%% pass rate  FAIL  (>= 80%% required)\n" "$MED_PASS_PCT"
             fi
             printf "\n"
             if [ "$VERDICT_FAIL" -eq 0 ]; then
-                if [ "$MED_PASS_PCT" -ge 80 ]; then
+                if [ "$MED_PASS_PCT" -lt 0 ] || [ "$MED_PASS_PCT" -ge 80 ]; then
                     printf "VERDICT: APPROVED — all criteria met\n"
                 else
                     printf "VERDICT: CONDITIONAL — CRITICAL/HIGH passed; MEDIUM below 80%%\n"
                 fi
             else
                 printf "VERDICT: NOT APPROVED\n"
-                [ "$CRIT_FAIL" -gt 0 ]      && printf "  Reason: %d CRITICAL test(s) failed\n" "$CRIT_FAIL"
-                [ "$HIGH_PASS_PCT" -lt 95 ] && printf "  Reason: HIGH pass rate %d%% below the 95%% threshold\n" "$HIGH_PASS_PCT"
+                [ "$CRIT_FAIL" -gt 0 ]                                    && printf "  Reason: %d CRITICAL test(s) failed\n" "$CRIT_FAIL"
+                [ "$HIGH_PASS_PCT" -ge 0 ] && [ "$HIGH_PASS_PCT" -lt 95 ] && printf "  Reason: HIGH pass rate %d%% below the 95%% threshold\n" "$HIGH_PASS_PCT"
             fi
             printf "=================================================================\n"
         } >> "$REPORT_TXT"
@@ -1196,6 +1217,7 @@ show_menu() {
                 read -r _dummy
                 ;;
             5)
+                check_root_privileges
                 load_module
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
@@ -1253,6 +1275,9 @@ while [ $# -gt 0 ]; do
                 exit 1
             fi
             SPECIFIC_TEST="$1"
+            case "$SPECIFIC_TEST" in
+                -*) log_error "--run: test name cannot start with '-': $SPECIFIC_TEST"; exit 1 ;;
+            esac
             COMMAND="run-specific"
             ;;
         --list)
@@ -1289,6 +1314,9 @@ while [ $# -gt 0 ]; do
                 exit 1
             fi
             PARALLELISM="$1"
+            case "$PARALLELISM" in
+                ''|*[!0-9]*) log_error "--parallelism requires a positive integer, got: '$PARALLELISM'"; exit 1 ;;
+            esac
             ;;
         --results-dir)
             shift
@@ -1356,5 +1384,3 @@ case $COMMAND in
         ;;
 esac
 
-echo ""
-printf '%s\n' "${WHITE}IBS Test Suite Manager v${SCRIPT_VERSION}${NC}"
