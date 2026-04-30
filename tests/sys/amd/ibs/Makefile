@@ -31,7 +31,8 @@ ATF_TESTS_C=	ibs_cpu_test \
 		ibs_invalid_input_test \
 		ibs_robustness_test \
 		ibs_concurrency_test \
-		ibs_hwpmc_info_test
+		ibs_hwpmc_info_test \
+		ibs_hwpmc_alloc_test
 
 ATF_TESTS_SH=	ibs_swfilt_test
 
