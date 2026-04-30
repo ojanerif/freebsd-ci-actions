@@ -11,16 +11,16 @@
 #
 
 # Configuration
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+SCRIPT_VERSION="2.1.0"
 REPO_URL="https://github.com/ojanerif/freebsd-src.git"
 BRANCH="experimental-port"
-SRC_DIR="../freebsd-experimental"
-TESTS_DIR="$SRC_DIR/tests/sys/amd/ibs"
+SRC_DIR="${SCRIPT_DIR}/dev/freebsd"
+TESTS_DIR="${SCRIPT_DIR}/tests/sys/amd/ibs"
 TESTS_INSTALL_DIR="/usr/tests/sys/amd/ibs"
 SOS_DIR="./freebsd-src"
 SOS_BRANCH="freebsd-ci-actions"
 ARCH=$(uname -m)
-SCRIPT_VERSION="2.1.0"
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Color codes for output (disabled when stdout is not a terminal)
 if [ -t 1 ]; then
@@ -213,6 +213,25 @@ log_verbose() {
     fi
 }
 
+# Confirm before executing an important command.
+# Usage: confirm_cmd "short description" "full command string"
+# Returns 0 to proceed, 1 if the user cancels.
+confirm_cmd() {
+    _cc_desc="$1"
+    _cc_cmd="$2"
+    printf '\n'
+    printf '%s\n' "${CYAN}── Command ──────────────────────────────────────────────────────${NC}"
+    [ -n "$_cc_desc" ] && printf '  %s%s%s\n' "$DIM" "$_cc_desc" "$NC"
+    printf '  %s\$ %s%s\n' "$BOLD" "$_cc_cmd" "$NC"
+    printf '%s\n' "${CYAN}─────────────────────────────────────────────────────────────────${NC}"
+    printf 'Proceed? [y/N] '
+    read -r _cc_yn
+    case "$_cc_yn" in
+        y|Y|yes|YES) return 0 ;;
+        *) log_info "Cancelled."; return 1 ;;
+    esac
+}
+
 # Safety checks
 check_boot_environment() {
     if [ $FORCE -eq 1 ]; then
@@ -284,6 +303,8 @@ sync_repository() {
     if [ ! -d "$SRC_DIR/.git" ]; then
         log_verbose "Performing fresh clone..."
         if [ $DRY_RUN -eq 0 ]; then
+            confirm_cmd "Clone $REPO_URL (branch: $BRANCH) into $SRC_DIR" \
+                "git clone -b $BRANCH $REPO_URL $SRC_DIR" || return 1
             git clone -b "$BRANCH" "$REPO_URL" "$SRC_DIR" || {
                 log_error "Failed to clone repository"
                 exit 1
@@ -292,6 +313,8 @@ sync_repository() {
     else
         log_verbose "Updating existing repository..."
         if [ $DRY_RUN -eq 0 ]; then
+            confirm_cmd "Update $SRC_DIR — fetch, reset to origin/$BRANCH, clean untracked" \
+                "git fetch origin $BRANCH && git reset --hard origin/$BRANCH && git clean -fd" || return 1
             cd "$SRC_DIR" || exit 1
             git fetch origin "$BRANCH" || {
                 log_error "Failed to fetch from repository"
@@ -322,27 +345,34 @@ compile_tests() {
     log_info "Building IBS test suite..."
 
     if [ ! -d "$TESTS_DIR" ]; then
-        log_error "Test directory not found: $TESTS_DIR"
-        log_error "Run --download first"
+        log_error "Test source directory not found: $TESTS_DIR"
         exit 1
     fi
 
     cd "$TESTS_DIR" || exit 1
 
     if [ $DRY_RUN -eq 0 ]; then
+        _ncpu=$(sysctl -n hw.ncpu)
+
         log_verbose "Cleaning previous build..."
+        confirm_cmd "Remove previous build artifacts in $TESTS_DIR" \
+            "make clean" || return 1
         make clean || {
             log_error "Failed to clean build"
             exit 1
         }
 
-        log_verbose "Building tests with $(sysctl -n hw.ncpu) parallel jobs..."
-        make -j$(sysctl -n hw.ncpu) || {
+        log_verbose "Building tests with ${_ncpu} parallel jobs..."
+        confirm_cmd "Compile IBS tests in $TESTS_DIR (${_ncpu} parallel jobs)" \
+            "make -j${_ncpu}" || return 1
+        make -j"$_ncpu" || {
             log_error "Failed to build tests"
             exit 1
         }
 
         log_verbose "Installing tests..."
+        confirm_cmd "Install test binaries to $TESTS_INSTALL_DIR" \
+            "make install" || return 1
         make install || {
             log_error "Failed to install tests"
             exit 1
@@ -423,6 +453,9 @@ commit_to_sos() {
     COMMIT_DATE=$(date +%Y-%m-%d)
 
     if [ $DRY_RUN -eq 0 ]; then
+        confirm_cmd "Sync tests/ and ci/tools/ into $SOS_DIR, then commit and push to sos-git branch $SOS_BRANCH" \
+            "cp tests/ ci/tools/ → $SOS_DIR  &&  git commit  &&  git push origin $SOS_BRANCH" || return 1
+
         # Sync tests/sys/amd/ibs/
         log_verbose "Syncing tests/sys/amd/ibs/ ..."
         mkdir -p "$SOS_DIR/tests/sys/amd/ibs"
@@ -465,6 +498,8 @@ commit_to_sos() {
         }
         log_verbose "Committed: $COMMIT_MSG"
 
+        confirm_cmd "Push to remote sos-git (irreversible)" \
+            "git push origin $SOS_BRANCH" || return 1
         git push origin "$SOS_BRANCH" || {
             log_error "Failed to push to sos-git"
             exit 1
@@ -524,6 +559,8 @@ run_all_tests() {
         done
 
         log_verbose "Running kyua test suite (parallelism: $PARALLELISM)..."
+        confirm_cmd "Run full IBS test suite in $TESTS_INSTALL_DIR (parallelism: $PARALLELISM)" \
+            "kyua -v parallelism=$PARALLELISM test" || return 1
 
         # Run kyua and process each line as it arrives; capture exit code via
         # temp file because the pipe subshell would swallow it otherwise.
@@ -808,6 +845,8 @@ run_specific_test() {
         mkdir -p "$RESULTS_DIR"
         REPORT_TXT="$RESULTS_DIR/report-${TEST_NAME}.txt"
 
+        confirm_cmd "Run single test in $TESTS_INSTALL_DIR" \
+            "kyua test sys/amd/ibs:$TEST_NAME" || return 1
         log_verbose "Running kyua test sys/amd/ibs:$TEST_NAME..."
 
         {
@@ -1049,6 +1088,8 @@ load_module() {
         if kldstat | grep -q cpuctl; then
             log_success "cpuctl module already loaded"
         else
+            confirm_cmd "Load cpuctl kernel module (required for MSR/CPUID access)" \
+                "kldload cpuctl" || return 1
             kldload cpuctl || {
                 log_error "Failed to load cpuctl module"
                 log_info "Ensure cpuctl is available in the kernel or as a module"
@@ -1059,6 +1100,137 @@ load_module() {
     else
         log_info "Would load cpuctl module (dry run)"
     fi
+}
+
+# Interactive menu
+show_menu() {
+    while true; do
+        clear
+        printf '%s\n' "${CYAN}=================================================================${NC}"
+        printf '%s\n' "${WHITE}  IBS Test Suite Manager v${SCRIPT_VERSION}${NC}"
+        printf '%s\n' "${CYAN}=================================================================${NC}"
+
+        # System info
+        printf "  System : %s\n" "$(uname -rs)"
+
+        # CPU vendor
+        _vendor=$(get_cpu_vendor)
+        case "$_vendor" in
+            AuthenticAMD|AMD)
+                printf "  CPU    : ${GREEN}%s — hardware IBS active${NC}\n" "$_vendor" ;;
+            *)
+                printf "  CPU    : ${YELLOW}%s — no hardware IBS${NC}\n" "$_vendor" ;;
+        esac
+
+        # cpuctl module
+        if kldstat -q -n cpuctl 2>/dev/null || [ -c /dev/cpuctl0 ]; then
+            printf "  cpuctl : ${GREEN}loaded${NC}\n"
+        else
+            printf "  cpuctl : ${RED}NOT loaded${NC}\n"
+        fi
+
+        # Tests installed
+        if [ -d "$TESTS_INSTALL_DIR" ]; then
+            _cnt=$(find "$TESTS_INSTALL_DIR" -name "*test" -type f 2>/dev/null | wc -l | tr -d ' ')
+            printf "  Tests  : ${GREEN}installed (%s binaries in %s)${NC}\n" "$_cnt" "$TESTS_INSTALL_DIR"
+        else
+            printf "  Tests  : ${RED}not installed — choose option 3 to compile${NC}\n"
+        fi
+
+        # Source location
+        if [ -d "$SRC_DIR/.git" ]; then
+            _commit=$(git -C "$SRC_DIR" log -1 --format="%h %cd" --date=format:'%Y-%m-%d' 2>/dev/null)
+            printf "  Source : dev/freebsd synced (%s)\n" "$_commit"
+        else
+            printf "  Source : local tests/ (repo checkout)\n"
+        fi
+
+        printf '%s\n' "${CYAN}=================================================================${NC}"
+        printf '\n'
+        printf '  %s1)%s Run all tests\n'               "$BOLD" "$NC"
+        printf '  %s2)%s Run specific test\n'           "$BOLD" "$NC"
+        printf '  %s3)%s Compile & install tests\n'     "$BOLD" "$NC"
+        printf '  %s4)%s Download source from GitHub\n' "$BOLD" "$NC"
+        printf '  %s5)%s Load kernel module (cpuctl)\n' "$BOLD" "$NC"
+        printf '  %s6)%s Show status\n'                 "$BOLD" "$NC"
+        printf '  %s7)%s List tests\n'                  "$BOLD" "$NC"
+        printf '  %s8)%s View last report\n'            "$BOLD" "$NC"
+        printf '  %s9)%s Commit to sos-git\n'           "$BOLD" "$NC"
+        printf '  %s0)%s Exit\n'                        "$BOLD" "$NC"
+        printf '\n'
+        printf '%sChoice: %s' "$BOLD" "$NC"
+        read -r MENU_CHOICE
+        printf '\n'
+
+        case "$MENU_CHOICE" in
+            1)
+                check_root_privileges
+                run_all_tests
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            2)
+                printf '%sTest name: %s' "$BOLD" "$NC"
+                read -r _test
+                if [ -n "$_test" ]; then
+                    check_root_privileges
+                    run_specific_test "$_test"
+                else
+                    log_error "No test name given"
+                fi
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            3)
+                check_boot_environment
+                check_root_privileges
+                compile_tests
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            4)
+                check_boot_environment
+                check_root_privileges
+                sync_repository
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            5)
+                load_module
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            6)
+                show_status
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            7)
+                list_tests
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            8)
+                show_report
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            9)
+                commit_to_sos
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            0|q|Q)
+                printf '%s\n' "${GREEN}Bye.${NC}"
+                exit 0
+                ;;
+            *)
+                log_error "Invalid option: '$MENU_CHOICE'"
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+        esac
+    done
 }
 
 # Main argument parsing
@@ -1179,9 +1351,7 @@ case $COMMAND in
         ;;
     *)
         if [ -z "$COMMAND" ]; then
-            log_error "No command specified"
-            show_usage
-            exit 1
+            show_menu
         fi
         ;;
 esac

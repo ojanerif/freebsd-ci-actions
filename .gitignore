@@ -1,6 +1,9 @@
 # FreeBSD source tree (clone of ojanerif/freebsd-src)
 freebsd-src
 
+# Local dev checkouts (kernel source, etc.) — never committed
+dev/
+
 # Local dev docs (never committed)
 dev-docs/
 
@@ -44,3 +47,13 @@ atf-work-*/
 
 # Personal documentation — local only, never pushed to any remote
 ojanerif-docs/
+CLAUDE.md
+GEMINI.md
+
+# AI agent rule files — local only, never committed
+AGENTS.md
+.clinerules
+.cursorrules
+.windsurfrules
+.kilocode
+.github/copilot-instructions.md
