@@ -124,11 +124,9 @@ ATF_TC(umcdf_umc_runtime_smoke_if_supported);
 ATF_TC_HEAD(umcdf_umc_runtime_smoke_if_supported, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Backend-ready smoke test for AMD UMC PMCs: if libpmc/hwpmc can "
-	    "allocate a UMC event, start/read/stop/release it around a memory "
-	    "traffic generator.  Current upstream FreeBSD skips here because UMC "
-	    "runtime support is not wired.");
+	    "Smoke test AMD UMC PMC runtime when a backend is available");
 	atf_tc_set_md_var(tc, "require.user", "root");
+	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(umcdf_umc_runtime_smoke_if_supported, tc)
@@ -179,15 +177,14 @@ ATF_TC_BODY(umcdf_umc_runtime_smoke_if_supported, tc)
 		amd_umcdf_release_pmc(pmcid);
 		atf_tc_fail("memory traffic setup failed: %s", strerror(error));
 	}
-	if (pmc_read(pmcid, &after) != 0) {
-		(void)pmc_stop(pmcid);
-		amd_umcdf_release_pmc(pmcid);
-		atf_tc_fail("pmc_read(after) failed: %s", strerror(errno));
-	}
 	if (pmc_stop(pmcid) != 0) {
 		amd_umcdf_release_pmc(pmcid);
 		atf_tc_fail("pmc_stop(%s) failed: %s", event->name,
 		    strerror(errno));
+	}
+	if (pmc_read(pmcid, &after) != 0) {
+		amd_umcdf_release_pmc(pmcid);
+		atf_tc_fail("pmc_read(after) failed: %s", strerror(errno));
 	}
 
 	ATF_CHECK_MSG(after >= before,
