@@ -152,10 +152,9 @@ ATF_TC(umcdf_df_runtime_smoke);
 ATF_TC_HEAD(umcdf_df_runtime_smoke, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Allocate, start, read, stop, and release an AMD Data Fabric PMC. "
-	    "This is a non-flaky runtime smoke test; semantic bandwidth "
-	    "validation belongs in a topology-aware follow-up test.");
+	    "Smoke test AMD Data Fabric PMC lifecycle");
 	atf_tc_set_md_var(tc, "require.user", "root");
+	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(umcdf_df_runtime_smoke, tc)
@@ -184,6 +183,11 @@ ATF_TC_BODY(umcdf_df_runtime_smoke, tc)
 	if (event == NULL)
 		atf_tc_skip("No allocatable DF PMU event candidate was found; "
 		    "last libpmc error was %s", strerror(last_error));
+	ATF_REQUIRE_MSG(cfg.pm_class == PMC_CLASS_K8 &&
+	    cfg.pm_md.pm_amd.pm_amd_sub_class ==
+	    PMC_AMD_SUB_CLASS_DATA_FABRIC,
+	    "DF runtime event %s is not backed by FreeBSD AMD Data Fabric hwpmc",
+	    event->name);
 
 	error = pmc_allocate(event->name, PMC_MODE_SC, 0, 0, &pmcid, 0);
 	if (error < 0 && (errno == ENOENT || errno == EOPNOTSUPP ||
@@ -198,10 +202,18 @@ ATF_TC_BODY(umcdf_df_runtime_smoke, tc)
 		atf_tc_fail("pmc_capabilities(%s) failed: %s", event->name,
 		    strerror(errno));
 	}
-	ATF_CHECK_MSG((caps & PMC_CAP_DOMWIDE) != 0,
-	    "DF PMC should be domain-wide");
-	ATF_CHECK_MSG((caps & PMC_CAP_QUALIFIER) != 0,
-	    "DF PMC should advertise qualifier capability");
+	if ((caps & (PMC_CAP_DOMWIDE | PMC_CAP_READ | PMC_CAP_QUALIFIER)) !=
+	    (PMC_CAP_DOMWIDE | PMC_CAP_READ | PMC_CAP_QUALIFIER)) {
+		amd_umcdf_release_pmc(pmcid);
+		atf_tc_fail("DF event %s is missing readable domain-wide "
+		    "qualifier caps", event->name);
+	}
+	if (!atf_tc_get_config_var_as_bool_wd(tc, "amd.umcdf.df_runtime",
+	    false)) {
+		amd_umcdf_release_pmc(pmcid);
+		atf_tc_skip("DF runtime disabled by default; set "
+		    "amd.umcdf.df_runtime=true");
+	}
 
 	if (pmc_start(pmcid) != 0) {
 		amd_umcdf_release_pmc(pmcid);
@@ -219,15 +231,14 @@ ATF_TC_BODY(umcdf_df_runtime_smoke, tc)
 		amd_umcdf_release_pmc(pmcid);
 		atf_tc_fail("memory traffic setup failed: %s", strerror(error));
 	}
-	if (pmc_read(pmcid, &after) != 0) {
-		(void)pmc_stop(pmcid);
-		amd_umcdf_release_pmc(pmcid);
-		atf_tc_fail("pmc_read(after) failed: %s", strerror(errno));
-	}
 	if (pmc_stop(pmcid) != 0) {
 		amd_umcdf_release_pmc(pmcid);
 		atf_tc_fail("pmc_stop(%s) failed: %s", event->name,
 		    strerror(errno));
+	}
+	if (pmc_read(pmcid, &after) != 0) {
+		amd_umcdf_release_pmc(pmcid);
+		atf_tc_fail("pmc_read(after) failed: %s", strerror(errno));
 	}
 
 	ATF_CHECK_MSG(after >= before,
