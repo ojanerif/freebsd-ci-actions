@@ -21,6 +21,7 @@ ATF_TC_HEAD(ibs_hwpmc_alloc_fetch_basic, tc)
 	    "Allocate and release a system-sampling IBS Fetch PMC via "
 	    "libpmc");
 	atf_tc_set_md_var(tc, "require.user", "root");
+	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_alloc_fetch_basic, tc)
@@ -43,6 +44,7 @@ ATF_TC_HEAD(ibs_hwpmc_alloc_op_basic, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Allocate and release a system-sampling IBS Op PMC via libpmc");
 	atf_tc_set_md_var(tc, "require.user", "root");
+	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_alloc_op_basic, tc)
@@ -66,6 +68,7 @@ ATF_TC_HEAD(ibs_hwpmc_alloc_reject_counting_mode, tc)
 	    "Reject IBS allocation in counting mode; IBS is sampling-only "
 	    "in libpmc");
 	atf_tc_set_md_var(tc, "require.user", "root");
+	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_alloc_reject_counting_mode, tc)
@@ -93,6 +96,7 @@ ATF_TC_HEAD(ibs_hwpmc_alloc_reject_bad_rate, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Reject IBS sample rates below the libpmc/kernel minimum");
 	atf_tc_set_md_var(tc, "require.user", "root");
+	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_alloc_reject_bad_rate, tc)
@@ -119,6 +123,7 @@ ATF_TC_HEAD(ibs_hwpmc_alloc_reject_unknown_qualifier, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Reject unknown IBS qualifiers during libpmc event parsing");
 	atf_tc_set_md_var(tc, "require.user", "root");
+	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_alloc_reject_unknown_qualifier, tc)
