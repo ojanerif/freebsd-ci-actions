@@ -364,7 +364,7 @@ static inline uint64_t
 amd_umcdf_expected_df_config(const struct amd_umcdf_cpu *cpu,
     const struct amd_umcdf_event_candidate *event)
 {
-	if (cpu->family >= 0x1a)
+	if (cpu->zen >= AMD_UMCDF_ZEN_4)
 		return (AMD_UMCDF_DF2_TO_EVENTMASK(event->event_code) |
 		    AMD_UMCDF_DF2_TO_UNITMASK(event->umask));
 

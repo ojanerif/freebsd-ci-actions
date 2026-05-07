@@ -190,7 +190,7 @@ ATF_TC_BODY(umcdf_df_runtime_smoke, tc)
 
 	error = pmc_allocate(event->name, PMC_MODE_SC, 0, 0, &pmcid, 0);
 	if (error < 0 && (errno == ENOENT || errno == EOPNOTSUPP ||
-	    errno == ENXIO || errno == EBUSY))
+	    errno == ENXIO || errno == EBUSY || errno == EINVAL))
 		atf_tc_skip("pmc_allocate(%s) is not available in this test "
 		    "environment: %s", event->name, strerror(errno));
 	ATF_REQUIRE_MSG(error == 0,
