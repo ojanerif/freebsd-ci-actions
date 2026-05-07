@@ -17,7 +17,6 @@ ATF_TC_HEAD(ibs_hwpmc_fetch_caps_and_width, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify pmc_capabilities() and pmc_width() for IBS Fetch");
 	atf_tc_set_md_var(tc, "require.user", "root");
-	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_fetch_caps_and_width, tc)

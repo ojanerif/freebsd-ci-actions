@@ -126,7 +126,6 @@ ATF_TC_HEAD(umcdf_umc_runtime_smoke_if_supported, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Smoke test AMD UMC PMC runtime when a backend is available");
 	atf_tc_set_md_var(tc, "require.user", "root");
-	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(umcdf_umc_runtime_smoke_if_supported, tc)

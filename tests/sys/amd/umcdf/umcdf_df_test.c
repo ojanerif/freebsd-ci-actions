@@ -154,7 +154,6 @@ ATF_TC_HEAD(umcdf_df_runtime_smoke, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Smoke test AMD Data Fabric PMC lifecycle");
 	atf_tc_set_md_var(tc, "require.user", "root");
-	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(umcdf_df_runtime_smoke, tc)

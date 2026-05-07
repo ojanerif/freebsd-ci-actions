@@ -19,7 +19,6 @@ ATF_TC_HEAD(ibs_hwpmc_fetch_lifecycle_smoke, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Allocate, attach, detach, and release an IBS Fetch PMC");
 	atf_tc_set_md_var(tc, "require.user", "root");
-	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_fetch_lifecycle_smoke, tc)
@@ -55,7 +54,6 @@ ATF_TC_HEAD(ibs_hwpmc_getmsr_virtual_negative, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify pmc_get_msr() rejects IBS sampling PMCs");
 	atf_tc_set_md_var(tc, "require.user", "root");
-	atf_tc_set_md_var(tc, "is_exclusive", "true");
 }
 
 ATF_TC_BODY(ibs_hwpmc_getmsr_virtual_negative, tc)
