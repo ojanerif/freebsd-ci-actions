@@ -16,6 +16,7 @@
  * Test IDs: TC-ACCTL-01 … TC-ACCTL-04
  */
 
+#include <sys/types.h>
 #include <sys/cpuctl.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>

@@ -27,8 +27,8 @@
  * handler is registered via a kernel sysctl).
  */
 
-#include <sys/cpuset.h>
 #include <sys/param.h>
+#include <sys/cpuset.h>
 #include <sys/sched.h>
 #include <sys/wait.h>
 

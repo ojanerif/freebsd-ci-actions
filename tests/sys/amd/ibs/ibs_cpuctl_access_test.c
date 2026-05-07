@@ -13,6 +13,7 @@
  * Test IDs: TC-CPUCTL-01 … TC-CPUCTL-05
  */
 
+#include <sys/types.h>
 #include <sys/cpuctl.h>
 #include <sys/ioctl.h>
 

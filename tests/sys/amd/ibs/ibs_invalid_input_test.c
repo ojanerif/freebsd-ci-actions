@@ -16,6 +16,7 @@
  * Test IDs: TC-INV-01 … TC-INV-07
  */
 
+#include <sys/types.h>
 #include <sys/cpuctl.h>
 #include <sys/ioctl.h>
 

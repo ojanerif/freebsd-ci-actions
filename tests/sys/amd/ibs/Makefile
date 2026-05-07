@@ -34,10 +34,18 @@ ATF_TESTS_C=	ibs_cpu_test \
 		ibs_hwpmc_info_test \
 		ibs_hwpmc_alloc_test \
 		ibs_hwpmc_caps_test \
-		ibs_hwpmc_runtime_test
+		ibs_hwpmc_runtime_test \
+		ibs_mem_stress_test \
+		ibs_cpu_stress_test
 
 ATF_TESTS_SH=	ibs_swfilt_test
 
 LIBADD+=pthread pmc
+
+# ATF is installed as a port at /usr/local (not a base library on this host).
+# Set LDADD_atf_c so atf.test.mk's per-test LDADD expansion finds the library,
+# and extend CFLAGS so new source files locate <atf-c.h>.
+CFLAGS+=	-I/usr/local/include
+LDADD_atf_c=	-L/usr/local/lib -latf-c
 
 .include <bsd.test.mk>
