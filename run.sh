@@ -167,6 +167,8 @@ ${YELLOW}COMMANDS:${NC}
     --status            Show current IBS implementation status
     --clean             Clean build artifacts
     --loadmodule        Load cpuctl kernel module for hardware access
+    --fetch             Pull latest commits from origin (github.com/ojanerif/freebsd-ci-actions main)
+    --push              Push local commits to origin (github.com/ojanerif/freebsd-ci-actions main)
     --commit            Sync tests/sys/amd/ibs/ and ci/tools/ to sos-git and push
     --help              Show this help message
 
@@ -182,7 +184,9 @@ ${YELLOW}EXAMPLES:${NC}
     $0 --download --compile --run-all    # Complete workflow
     $0 --compile --run-all               # Build and run (source already present)
     $0 --run ibs_detect_test             # Run specific test
-    $0 --commit                          # Push tests to sos-git
+    $0 --fetch                            # Pull latest changes from GitHub
+    $0 --push                             # Push local commits to GitHub
+    $0 --commit                           # Push tests to sos-git
     $0 --list                            # List available tests
     $0 --report                          # Show test results
 
@@ -520,6 +524,67 @@ commit_to_sos() {
         log_info "Would sync: tests/sys/amd/ibs/, tests/sys/amd/pmc/, ci/tools/"
         log_info "Would commit: amd: update tests and ci tools — $COMMIT_DATE"
         log_info "Would push to: ssh://git@sos-git.amd.com/freebsd-src.git branch $SOS_BRANCH"
+    fi
+}
+
+# Fetch / push the freebsd-ci-actions repo itself (origin = github.com/ojanerif/freebsd-ci-actions)
+fetch_from_remote() {
+    log_info "Fetching from origin (github.com/ojanerif/freebsd-ci-actions main)..."
+
+    if [ ! -d "$SCRIPT_DIR/.git" ]; then
+        log_error "Not a git repository: $SCRIPT_DIR"
+        exit 1
+    fi
+
+    if [ $DRY_RUN -eq 0 ]; then
+        _before=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null)
+        confirm_cmd "Pull origin main into $SCRIPT_DIR" \
+            "git -C $SCRIPT_DIR pull origin main" || return 1
+        git -C "$SCRIPT_DIR" pull origin main || {
+            log_error "Failed to pull from origin"
+            exit 1
+        }
+        _after=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null)
+        if [ "$_before" = "$_after" ]; then
+            log_info "Already up to date ($_before)"
+        else
+            log_success "Updated $_before → $_after"
+            git -C "$SCRIPT_DIR" log --oneline "${_before}..HEAD" 2>/dev/null | \
+                while IFS= read -r line; do printf "  %s\n" "$line"; done
+        fi
+    else
+        log_info "Would pull from origin main (dry run)"
+    fi
+}
+
+push_to_remote() {
+    log_info "Pushing to origin (github.com/ojanerif/freebsd-ci-actions main)..."
+
+    if [ ! -d "$SCRIPT_DIR/.git" ]; then
+        log_error "Not a git repository: $SCRIPT_DIR"
+        exit 1
+    fi
+
+    if [ $DRY_RUN -eq 0 ]; then
+        # Fetch remote state so the ahead count is current
+        git -C "$SCRIPT_DIR" fetch origin main 2>/dev/null || true
+        _ahead=$(git -C "$SCRIPT_DIR" rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+        if [ "${_ahead:-0}" -eq 0 ]; then
+            log_info "Nothing to push — local main is already up to date with origin/main"
+            return 0
+        fi
+        log_info "$_ahead commit(s) ahead of origin/main:"
+        git -C "$SCRIPT_DIR" log --oneline origin/main..HEAD 2>/dev/null | \
+            while IFS= read -r line; do printf "  %s\n" "$line"; done
+        confirm_cmd "Push local main to origin (irreversible)" \
+            "git -C $SCRIPT_DIR push origin main" || return 1
+        git -C "$SCRIPT_DIR" push origin main || {
+            log_error "Failed to push to origin"
+            exit 1
+        }
+        log_success "Pushed $_ahead commit(s) to origin/main"
+    else
+        log_info "Would push to origin main (dry run)"
     fi
 }
 
@@ -1177,6 +1242,8 @@ show_menu() {
         printf '  %s7)%s List tests\n'                  "$BOLD" "$NC"
         printf '  %s8)%s View last report\n'            "$BOLD" "$NC"
         printf '  %s9)%s Commit to sos-git\n'           "$BOLD" "$NC"
+        printf '  %sf)%s Fetch from GitHub (origin main)\n' "$BOLD" "$NC"
+        printf '  %sp)%s Push to GitHub (origin main)\n'    "$BOLD" "$NC"
         printf '  %s0)%s Exit\n'                        "$BOLD" "$NC"
         printf '\n'
         printf '%sChoice: %s' "$BOLD" "$NC"
@@ -1242,6 +1309,16 @@ show_menu() {
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
                 ;;
+            f|F)
+                fetch_from_remote
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            p|P)
+                push_to_remote
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
             0|q|Q)
                 printf '%s\n' "${GREEN}Bye.${NC}"
                 exit 0
@@ -1294,6 +1371,12 @@ while [ $# -gt 0 ]; do
             ;;
         --loadmodule)
             COMMAND="loadmodule"
+            ;;
+        --fetch)
+            COMMAND="fetch"
+            ;;
+        --push)
+            COMMAND="push"
             ;;
         --commit)
             COMMAND="commit"
@@ -1373,6 +1456,12 @@ case $COMMAND in
         ;;
     loadmodule)
         load_module
+        ;;
+    fetch)
+        fetch_from_remote
+        ;;
+    push)
+        push_to_remote
         ;;
     commit)
         commit_to_sos
