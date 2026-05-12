@@ -1,13 +1,10 @@
 # Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause
 #
-# call-l3-full.yml — Placeholder caller for L3 Counter PMU tests (§4.1 l3-tests.yml).
-#
-# BLOCKED: tests/sys/amd/l3/ test suite does not exist yet.
-# This file is a template — activate when the L3 test suite is implemented.
-# Copy to ojanerif/freebsd-src/.github/workflows/l3-tests.yml when ready.
+# call-l3-full.yml — Caller for AMD L3 Counter PMU tests.
+# Targets: l3_detect_test, l3_miss_test, l3_hit_test (Zen 5/6, hwpmc).
 
-name: L3 Counter PMU Test Suite (PLACEHOLDER)
+name: L3 Counter PMU Test Suite
 
 on:
   push:
@@ -28,8 +25,6 @@ on:
 
 jobs:
   l3-tests:
-    # TODO: remove this condition once tests/sys/amd/l3/ exists
-    if: false  # Disabled until L3 test suite is implemented
     uses: ojanerif/freebsd-ci-actions/.github/workflows/ibs-full-test.yml@main
     secrets: inherit
     with:
