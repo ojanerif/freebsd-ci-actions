@@ -40,13 +40,25 @@
 
 /*
  * Returns true if FreeBSD ships L3 PMU event JSON for this Zen generation.
- * Based on the pmu-events JSON files present in the tree (amdzen5/l3-cache.json
- * and amdzen6/l3-cache.json).  Extend when earlier generations are added.
+ *
+ * All Zen generations (Zen 1 through Zen 6) carry l3_lookup_state events with
+ * "Unit": "L3PMC" in their pmu-events JSON tables:
+ *   amdzen1..3 : l3_lookup_state.all_coherent_accesses_to_l3 (1 event)
+ *   amdzen4..6 : l3_lookup_state.l3_miss, l3_hit, all_coherent (3 events)
+ *
+ * pre-Zen, future, and unknown families are excluded.
  */
 static inline bool
 amd_l3_has_freebsd_l3_json(const struct amd_umcdf_cpu *cpu)
 {
-	return (cpu->zen == AMD_UMCDF_ZEN_5 || cpu->zen == AMD_UMCDF_ZEN_6);
+	return (cpu->zen == AMD_UMCDF_ZEN_1 ||
+	    cpu->zen == AMD_UMCDF_ZEN_PLUS ||
+	    cpu->zen == AMD_UMCDF_ZEN_2 ||
+	    cpu->zen == AMD_UMCDF_ZEN_3 ||
+	    cpu->zen == AMD_UMCDF_ZEN_3_PLUS ||
+	    cpu->zen == AMD_UMCDF_ZEN_4 ||
+	    cpu->zen == AMD_UMCDF_ZEN_5 ||
+	    cpu->zen == AMD_UMCDF_ZEN_6);
 }
 
 /*

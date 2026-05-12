@@ -48,8 +48,7 @@ ATF_TC_BODY(l3_capability_probe, tc)
 	    amd_umcdf_zen_name(cpu.zen), cpu.family, cpu.model, cpu.stepping);
 
 	if (!amd_l3_has_freebsd_l3_json(&cpu))
-		atf_tc_skip("FreeBSD L3 PMU JSON (amdzen5/l3-cache.json, "
-		    "amdzen6/l3-cache.json) covers Zen 5 and Zen 6; "
+		atf_tc_skip("FreeBSD L3 PMU JSON covers Zen 1 through Zen 6; "
 		    "detected %s", amd_umcdf_zen_name(cpu.zen));
 
 	error = amd_umcdf_read_perfmon_v2(&cpu, &pmv2);

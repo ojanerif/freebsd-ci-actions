@@ -80,7 +80,7 @@ ATF_TC_BODY(l3_miss_pmu_metadata_contract, tc)
 
 	amd_umcdf_skip_unless_known_zen(&cpu);
 	if (!amd_l3_has_freebsd_l3_json(&cpu))
-		atf_tc_skip("FreeBSD L3 PMU JSON covers Zen 5/6; detected %s",
+		atf_tc_skip("FreeBSD L3 PMU JSON covers Zen 1–6; detected %s",
 		    amd_umcdf_zen_name(cpu.zen));
 	amd_umcdf_skip_unless_pmu_events();
 
