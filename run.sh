@@ -13,8 +13,8 @@
 # Configuration
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 SCRIPT_VERSION="2.1.0"
-REPO_URL="https://github.com/ojanerif/freebsd-src.git"
-BRANCH="experimental-port"
+REPO_URL="https://github.com/AMDESE/freebsd-src.git"
+BRANCH="amdese/integration/main"
 SRC_DIR="${SCRIPT_DIR}/dev/freebsd"
 TESTS_DIR="${SCRIPT_DIR}/tests/sys/amd/ibs"
 TESTS_INSTALL_DIR="/usr/tests/sys/amd/ibs"
@@ -46,20 +46,64 @@ fi
 #   MEDIUM   — pass rate must be >= 80%
 get_test_meta() {
     case "$1" in
-        ibs_cpu_test)             printf "TC-DET:Hardware Detection:CRITICAL" ;;
-        ibs_detect_test)          printf "TC-DET:Hardware Detection:CRITICAL" ;;
-        ibs_msr_test)             printf "TC-MSR:MSR Control:CRITICAL" ;;
-        ibs_period_test)          printf "TC-MSR:MSR Control:CRITICAL" ;;
-        ibs_interrupt_test)       printf "TC-INT:Interrupt Delivery:HIGH" ;;
-        ibs_routing_test)         printf "TC-INT:Interrupt Delivery:HIGH" ;;
-        ibs_data_accuracy_test)   printf "TC-DATA:Sample Accuracy:HIGH" ;;
-        ibs_l3miss_test)          printf "TC-DATA:Sample Accuracy:HIGH" ;;
-        ibs_smp_test)             printf "TC-SMP:SMP/Per-CPU:HIGH" ;;
-        ibs_api_test)             printf "TC-API:Userspace API:MEDIUM" ;;
-        ibs_ioctl_test)           printf "TC-API:Userspace API:MEDIUM" ;;
-        ibs_swfilt_test)          printf "TC-API:Userspace API:MEDIUM" ;;
-        ibs_stress_test)          printf "TC-STR:Stability/Stress:MEDIUM" ;;
-        *)                        printf "TC-MISC:Miscellaneous:MEDIUM" ;;
+        # TC-DET — Hardware Detection [CRITICAL]
+        ibs_cpu_test)                    printf "TC-DET:Hardware Detection:CRITICAL" ;;
+        ibs_detect_test)                 printf "TC-DET:Hardware Detection:CRITICAL" ;;
+        # TC-MSR — MSR Control [CRITICAL]
+        ibs_msr_test)                    printf "TC-MSR:MSR Control:CRITICAL" ;;
+        ibs_period_test)                 printf "TC-MSR:MSR Control:CRITICAL" ;;
+        # TC-INT — Interrupt Delivery [HIGH]
+        ibs_interrupt_test)              printf "TC-INT:Interrupt Delivery:HIGH" ;;
+        ibs_routing_test)                printf "TC-INT:Interrupt Delivery:HIGH" ;;
+        # TC-DATA — Sample Accuracy [HIGH]
+        ibs_data_accuracy_test)          printf "TC-DATA:Sample Accuracy:HIGH" ;;
+        ibs_l3miss_test)                 printf "TC-DATA:Sample Accuracy:HIGH" ;;
+        # TC-SMP — SMP/Per-CPU [HIGH]
+        ibs_smp_test)                    printf "TC-SMP:SMP/Per-CPU:HIGH" ;;
+        # TC-HWPMC — hwpmc API [HIGH]
+        ibs_hwpmc_alloc_test)            printf "TC-HWPMC:hwpmc API:HIGH" ;;
+        ibs_hwpmc_caps_test)             printf "TC-HWPMC:hwpmc API:HIGH" ;;
+        ibs_hwpmc_info_test)             printf "TC-HWPMC:hwpmc API:HIGH" ;;
+        ibs_hwpmc_runtime_test)          printf "TC-HWPMC:hwpmc API:HIGH" ;;
+        # TC-DRV — Driver Access [HIGH]
+        ibs_cpuctl_access_test)          printf "TC-DRV:Driver Access:HIGH" ;;
+        # TC-CONC — Concurrency/Robustness [HIGH]
+        ibs_concurrency_test)            printf "TC-CONC:Concurrency:HIGH" ;;
+        ibs_robustness_test)             printf "TC-CONC:Concurrency:HIGH" ;;
+        # TC-SEC — Security/Access Control [HIGH]
+        ibs_access_control_test)         printf "TC-SEC:Security/Access:HIGH" ;;
+        ibs_invalid_input_test)          printf "TC-SEC:Security/Access:HIGH" ;;
+        # TC-API — Userspace API [MEDIUM]
+        ibs_api_test)                    printf "TC-API:Userspace API:MEDIUM" ;;
+        ibs_ioctl_test)                  printf "TC-API:Userspace API:MEDIUM" ;;
+        ibs_swfilt_test)                 printf "TC-API:Userspace API:MEDIUM" ;;
+        # TC-STR — Stability/Stress [MEDIUM]
+        ibs_stress_test)                 printf "TC-STR:Stability/Stress:MEDIUM" ;;
+        ibs_cpu_stress_test)             printf "TC-STR:Stability/Stress:MEDIUM" ;;
+        ibs_mem_stress_test)             printf "TC-STR:Stability/Stress:MEDIUM" ;;
+        # TC-UNIT — Unit Tests (no hardware required) [MEDIUM]
+        ibs_unit_cpuid_parse_test)       printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_datasrc_test)           printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_feature_flags_test)     printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_fetch_ctl_fields_test)  printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_field_masks_test)       printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_helpers_test)           printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_ldlat_test)             printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_msr_range_test)         printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_op_data_fields_test)    printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        ibs_unit_op_ext_maxcnt_test)     printf "TC-UNIT:Unit Tests:MEDIUM" ;;
+        # UMCDF tests
+        umcdf_cpuid_test)                printf "TC-UMCDET:UMC/DF Detection:CRITICAL" ;;
+        umcdf_df_test)                   printf "TC-UMCPMC:DF PMC:HIGH" ;;
+        umcdf_umc_test)                  printf "TC-UMCPMC:UMC PMC:HIGH" ;;
+        umcdf_unit_capabilities_test)    printf "TC-UMCUNIT:UMCDF Unit:MEDIUM" ;;
+        umcdf_unit_df_config_dispatch_test) printf "TC-UMCUNIT:UMCDF Unit:MEDIUM" ;;
+        umcdf_unit_df_encoding_test)     printf "TC-UMCUNIT:UMCDF Unit:MEDIUM" ;;
+        umcdf_unit_perfmonv2_test)       printf "TC-UMCUNIT:UMCDF Unit:MEDIUM" ;;
+        umcdf_unit_vendor_test)          printf "TC-UMCUNIT:UMCDF Unit:MEDIUM" ;;
+        umcdf_unit_zen_map_test)         printf "TC-UMCUNIT:UMCDF Unit:MEDIUM" ;;
+        umcdf_unit_zen_name_test)        printf "TC-UMCUNIT:UMCDF Unit:MEDIUM" ;;
+        *)                               printf "TC-MISC:Miscellaneous:MEDIUM" ;;
     esac
 }
 
@@ -130,7 +174,7 @@ VERBOSE=0
 DRY_RUN=0
 FORCE=0
 PARALLELISM="${PARALLELISM:-$(sysctl -n hw.ncpu 2>/dev/null || echo 1)}"
-RESULTS_DIR="${RESULTS_DIR:-$SCRIPT_DIR/work/results-$$}"
+RESULTS_DIR="${RESULTS_DIR:-$SCRIPT_DIR/work/results-$(date +%Y-%m-%d_%H-%M-%S)}"
 TEST_RESULTS=""
 TOTAL_TESTS=0
 PASSED_TESTS=0
@@ -139,66 +183,742 @@ SKIPPED_TESTS=0
 XFAIL_TESTS=0
 BROKEN_TESTS=0
 
+# Suite / category selection
+# SUITE: IBS | UMCDF | PMC | ALL
+SUITE="${SUITE:-IBS}"
+# CATEGORIES: space-separated list of TC-* codes; empty = all categories for the suite
+CATEGORIES=""
+
+# --auto mode
+AUTO_MODE=0
+REPORT_EMAIL="${REPORT_EMAIL:-ojanerif@amd.com}"   # comma-separated for multiple recipients
+AUTO_KERNCONF="${AUTO_KERNCONF:-GENERIC}"
+AUTOTEST_SENTINEL="/var/db/ibs-autotest-sentinel"
+LAST_COMMIT_FILE="/var/db/ibs-autotest-last-commit"
+RCD_SERVICE="/usr/local/etc/rc.d/ibs_autotest"
+
 # Remove temp files on exit or interrupt (SIGINT/SIGTERM)
 _ibs_cleanup() {
     rm -f /tmp/ibs_exit_$$.tmp /tmp/ibs_pass_$$.tmp /tmp/ibs_fail_$$.tmp \
           /tmp/ibs_skip_$$.tmp /tmp/ibs_xfail_$$.tmp /tmp/ibs_broken_$$.tmp \
           /tmp/ibs_crit_f_$$.tmp /tmp/ibs_high_p_$$.tmp /tmp/ibs_high_f_$$.tmp \
-          /tmp/ibs_med_p_$$.tmp /tmp/ibs_med_f_$$.tmp
+          /tmp/ibs_med_p_$$.tmp /tmp/ibs_med_f_$$.tmp /tmp/ibs_matrix_$$.tmp \
+          /tmp/ibs_kyuafile_$$.tmp 2>/dev/null || true
 }
 trap _ibs_cleanup EXIT INT TERM
+
+# ── Suite helpers ──────────────────────────────────────────────────────────
+
+# Return the source (build) directory for a suite
+suite_src_dir() {
+    case "$1" in
+        IBS)   printf '%s' "${SCRIPT_DIR}/tests/sys/amd/ibs" ;;
+        UMCDF) printf '%s' "${SCRIPT_DIR}/tests/sys/amd/umcdf" ;;
+        PMC)   printf '%s' "${SCRIPT_DIR}/tests/sys/amd/pmc" ;;
+        *)     printf '%s' "${SCRIPT_DIR}/tests/sys/amd/ibs" ;;
+    esac
+}
+
+# Return the install (kyua) directory for a suite
+suite_install_dir() {
+    case "$1" in
+        IBS)   printf '/usr/tests/sys/amd/ibs' ;;
+        UMCDF) printf '/usr/tests/sys/amd/umcdf' ;;
+        PMC)   printf '/usr/tests/sys/amd/pmc' ;;
+        *)     printf '/usr/tests/sys/amd/ibs' ;;
+    esac
+}
+
+# ── Category / filtered Kyuafile ───────────────────────────────────────────
+
+# Return true (0) if test binary $1 belongs to any category in $2 (space-sep list)
+test_in_categories() {
+    _bin="$1"; _cats="$2"
+    _meta=$(get_test_meta "$_bin")
+    _bincat=$(printf '%s' "$_meta" | cut -d: -f1)
+    for _c in $_cats; do
+        [ "$_bincat" = "$_c" ] && return 0
+    done
+    return 1
+}
+
+# Build a filtered Kyuafile containing only tests from the selected categories.
+# Writes to /tmp/ibs_kyuafile_$$.tmp and prints the path.
+# If CATEGORIES is empty, prints the original Kyuafile path unchanged.
+build_filtered_kyuafile() {
+    _install_dir="$1"
+    _original="${_install_dir}/Kyuafile"
+
+    if [ -z "$CATEGORIES" ]; then
+        printf '%s' "$_original"
+        return 0
+    fi
+
+    _tmp="/tmp/ibs_kyuafile_$$.tmp"
+    # Copy header lines (syntax / test_suite declarations)
+    grep -v '^atf_test_program' "$_original" > "$_tmp" 2>/dev/null || true
+
+    # Include only tests whose category matches
+    while IFS= read -r line; do
+        case "$line" in
+            atf_test_program*)
+                _name=$(printf '%s' "$line" | sed 's/.*name="\([^"]*\)".*/\1/')
+                if test_in_categories "$_name" "$CATEGORIES"; then
+                    printf '%s\n' "$line" >> "$_tmp"
+                fi
+                ;;
+        esac
+    done < "$_original"
+
+    _count=$(grep -c '^atf_test_program' "$_tmp" 2>/dev/null || echo 0)
+    log_verbose "Filtered Kyuafile: $CATEGORIES → ${_count} test(s)"
+    printf '%s' "$_tmp"
+}
+
+# ── Email reporting ────────────────────────────────────────────────────────
+
+# mail_all <subject> <body> [addr_list]
+# Sends body to every comma-separated address in addr_list (default: $REPORT_EMAIL).
+mail_all() {
+    _ma_subject="$1"
+    _ma_body="$2"
+    _ma_list="${3:-$REPORT_EMAIL}"
+    if [ $DRY_RUN -eq 1 ]; then
+        log_info "Would email '${_ma_subject}' to '${_ma_list}' (dry run)"
+        return 0
+    fi
+    _ma_IFS="$IFS"; IFS=','
+    for _ma_addr in $_ma_list; do
+        _ma_addr=$(printf '%s' "$_ma_addr" | tr -d ' ')
+        [ -n "$_ma_addr" ] && printf '%s\n' "$_ma_body" | mail -s "$_ma_subject" "$_ma_addr"
+    done
+    IFS="$_ma_IFS"
+    log_success "Email sent to: ${_ma_list}"
+}
+
+# send_report_email <report_txt> <verdict> <email_addr>
+send_report_email() {
+    _report="$1"
+    _verdict="$2"
+    _to="${3:-$REPORT_EMAIL}"
+
+    _subject="[AMD CI] ${SUITE} Test Suite: ${_verdict} — $(hostname -s) $(date +%Y-%m-%d)"
+
+    if [ ! -f "$_report" ]; then
+        log_warning "Report file not found: $_report — sending summary only"
+        _body=$(printf 'AMD PMU CI Report\nVerdict: %s\nDate: %s\nHost: %s\n' \
+            "$_verdict" "$(date)" "$(uname -n)")
+        mail_all "$_subject" "$_body" "$_to"
+        return
+    fi
+
+    # Capture full report body then fan out to all recipients
+    _body=$(
+        printf 'AMD PMU CI — %s Test Suite Report\n' "$SUITE"
+        printf 'Verdict  : %s\n' "$_verdict"
+        printf 'Date     : %s\n' "$(date)"
+        printf 'Host     : %s  (%s)\n' "$(uname -n)" "$(uname -r)"
+        printf 'Suite    : %s\n' "$SUITE"
+        [ -n "$CATEGORIES" ] && printf 'Categories: %s\n' "$CATEGORIES"
+        printf '\n'
+        cat "$_report"
+    )
+    mail_all "$_subject" "$_body" "$_to"
+}
+
+# ── Kernel build ───────────────────────────────────────────────────────────
+
+# Build the kernel from $SRC_DIR using KERNCONF
+build_kernel_from_src() {
+    _ncpu=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    log_info "Building kernel: KERNCONF=${AUTO_KERNCONF}  jobs=${_ncpu}"
+
+    if [ $DRY_RUN -eq 1 ]; then
+        log_info "Would run: make -j${_ncpu} buildkernel KERNCONF=${AUTO_KERNCONF} (dry run)"
+        return 0
+    fi
+
+    if [ ! -d "$SRC_DIR" ]; then
+        log_error "Source directory not found: $SRC_DIR"
+        log_error "Run --download first to clone the FreeBSD source."
+        exit 1
+    fi
+
+    confirm_cmd "Build kernel KERNCONF=${AUTO_KERNCONF} in ${SRC_DIR} (${_ncpu} jobs, ~5–10 min)" \
+        "make -C ${SRC_DIR} -j${_ncpu} buildkernel KERNCONF=${AUTO_KERNCONF}" || return 1
+
+    if make -C "$SRC_DIR" -j"$_ncpu" buildkernel KERNCONF="$AUTO_KERNCONF"; then
+        log_success "Kernel build complete"
+    else
+        log_error "Kernel build failed"
+        exit 1
+    fi
+}
+
+# Install the built kernel; old kernel preserved automatically as /boot/kernel.old
+install_kernel_to_boot() {
+    log_info "Installing kernel to /boot/kernel (old → /boot/kernel.old)..."
+
+    if [ $DRY_RUN -eq 1 ]; then
+        log_info "Would run: make installkernel KERNCONF=${AUTO_KERNCONF} (dry run)"
+        return 0
+    fi
+
+    confirm_cmd "Install kernel (replaces /boot/kernel; old saved as /boot/kernel.old)" \
+        "make -C ${SRC_DIR} installkernel KERNCONF=${AUTO_KERNCONF}" || return 1
+
+    if make -C "$SRC_DIR" installkernel KERNCONF="$AUTO_KERNCONF"; then
+        log_success "Kernel installed to /boot/kernel"
+        # nextboot -k kernel marks this kernel for the next boot explicitly
+        nextboot -f -k kernel && log_verbose "nextboot set to kernel" || \
+            log_warning "nextboot failed — kernel will still boot (it is the default)"
+    else
+        log_error "Kernel install failed"
+        exit 1
+    fi
+}
+
+# ── Auto-test sentinel and rc.d service ───────────────────────────────────
+
+# Write the sentinel file that the rc.d service reads after reboot
+write_autotest_sentinel() {
+    _email="${1:-$REPORT_EMAIL}"
+
+    log_info "Writing autotest sentinel: ${AUTOTEST_SENTINEL}"
+    if [ $DRY_RUN -eq 1 ]; then
+        log_info "Would write sentinel: ${AUTOTEST_SENTINEL} (dry run)"
+        return 0
+    fi
+    _sentinel_commit=$(git -C "$SRC_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
+    cat > "$AUTOTEST_SENTINEL" << EOF
+# ibs-autotest sentinel — written by run.sh --auto
+# Consumed and deleted by ${RCD_SERVICE} after tests complete.
+AUTOTEST_EMAIL=${_email}
+AUTOTEST_SUITE=${SUITE}
+AUTOTEST_CATEGORIES=${CATEGORIES}
+AUTOTEST_SCRIPT_DIR=${SCRIPT_DIR}
+AUTOTEST_KERNCONF=${AUTO_KERNCONF}
+AUTOTEST_TRIGGER_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+AUTOTEST_SRC_COMMIT=${_sentinel_commit}
+EOF
+    chmod 600 "$AUTOTEST_SENTINEL"
+    log_success "Sentinel written"
+}
+
+# Install the rc.d service that runs tests once after reboot
+install_rcd_service() {
+    log_info "Installing rc.d service: ${RCD_SERVICE}"
+    if [ $DRY_RUN -eq 1 ]; then
+        log_info "Would install rc.d service: ${RCD_SERVICE} (dry run)"
+        log_info "Would enable: sysrc ibs_autotest_enable=YES (dry run)"
+        return 0
+    fi
+
+    cat > "$RCD_SERVICE" << 'RCEOF'
+#!/bin/sh
+#
+# PROVIDE: ibs_autotest
+# REQUIRE: NETWORKING LOGIN cleanvar
+# KEYWORD: nojail
+#
+# ibs_autotest rc.d service — runs AMD PMU test suite once after --auto reboot.
+# Self-disables after completion.  Written by run.sh --auto.
+
+. /etc/rc.subr
+
+name="ibs_autotest"
+rcvar="${name}_enable"
+start_cmd="${name}_run"
+stop_cmd=":"
+
+ibs_autotest_run()
+{
+    SENTINEL="/var/db/ibs-autotest-sentinel"
+    LOG="/var/log/ibs-autotest.log"
+
+    [ -f "$SENTINEL" ] || return 0
+
+    # Read config from sentinel
+    . "$SENTINEL"
+    SCRIPT="${AUTOTEST_SCRIPT_DIR}/run.sh"
+
+    {
+        echo "=== ibs_autotest rc.d started: $(date) ==="
+        echo "Suite      : ${AUTOTEST_SUITE}"
+        echo "Categories : ${AUTOTEST_CATEGORIES}"
+        echo "Email      : ${AUTOTEST_EMAIL}"
+        echo "Kernel     : ${AUTOTEST_KERNCONF}"
+        echo ""
+    } >> "$LOG" 2>&1
+
+    # Disable ourselves so we don't run on the next reboot
+    sysrc -x "${name}_enable" >> "$LOG" 2>&1 || sysrc "${name}_enable"=NO >> "$LOG" 2>&1
+
+    # Remove sentinel to prevent re-run
+    rm -f "$SENTINEL"
+
+    # Build args — --force skips all confirm_cmd prompts (no tty in rc.d context)
+    _args="--run-all --force"
+    [ -n "$AUTOTEST_SUITE" ]      && _args="$_args --suite $AUTOTEST_SUITE"
+    _cat_args=""
+    for _c in $AUTOTEST_CATEGORIES; do
+        _cat_args="$_cat_args --category $_c"
+    done
+
+    # Compile test suite if not installed
+    if [ ! -d "/usr/tests/sys/amd/${AUTOTEST_SUITE:+$(echo "$AUTOTEST_SUITE" | tr '[:upper:]' '[:lower:]')}" ]; then
+        echo "=== Compiling test suite ===" >> "$LOG"
+        sh "$SCRIPT" --compile --suite "$AUTOTEST_SUITE" >> "$LOG" 2>&1 || true
+    fi
+
+    # Run tests and capture report
+    RESULTS_DIR="/var/log/ibs-autotest-results-$(date +%Y%m%d-%H%M%S)"
+    echo "=== Running tests (results: $RESULTS_DIR) ===" >> "$LOG"
+    sh "$SCRIPT" $_args $_cat_args \
+        --results-dir "$RESULTS_DIR" \
+        >> "$LOG" 2>&1
+    _rc=$?
+
+    # Determine verdict from report
+    _verdict="UNKNOWN"
+    if [ -f "${RESULTS_DIR}/report.txt" ]; then
+        if grep -q "VERDICT: APPROVED" "${RESULTS_DIR}/report.txt"; then
+            _verdict="APPROVED"
+        elif grep -q "VERDICT: CONDITIONAL" "${RESULTS_DIR}/report.txt"; then
+            _verdict="CONDITIONAL"
+        elif grep -q "VERDICT: NOT APPROVED" "${RESULTS_DIR}/report.txt"; then
+            _verdict="NOT APPROVED"
+        fi
+    fi
+
+    echo "=== Test run finished (rc=$_rc) verdict=$_verdict ===" >> "$LOG"
+
+    # Email the report to every comma-separated address in AUTOTEST_EMAIL
+    _report="${RESULTS_DIR}/report.txt"
+    _subject="[AMD CI] ${AUTOTEST_SUITE} Tests: ${_verdict} — $(hostname -s) $(date +%Y-%m-%d)"
+    _body=$(
+        printf 'AMD PMU CI — %s Test Suite Report\n' "$AUTOTEST_SUITE"
+        printf 'Verdict  : %s\n' "$_verdict"
+        printf 'Date     : %s\n' "$(date)"
+        printf 'Host     : %s  (%s)\n' "$(uname -n)" "$(uname -r)"
+        printf 'Kernel   : %s\n' "$AUTOTEST_KERNCONF"
+        printf 'Trigger  : %s\n' "$AUTOTEST_TRIGGER_TIME"
+        printf '\n'
+        [ -f "$_report" ] && cat "$_report" || echo "(no report file found)"
+    )
+    _rcd_IFS="$IFS"; IFS=','
+    for _rcd_addr in $AUTOTEST_EMAIL; do
+        _rcd_addr=$(printf '%s' "$_rcd_addr" | tr -d ' ')
+        [ -n "$_rcd_addr" ] && printf '%s\n' "$_body" | mail -s "$_subject" "$_rcd_addr"
+    done
+    IFS="$_rcd_IFS"
+
+    echo "=== Report emailed to $AUTOTEST_EMAIL ===" >> "$LOG"
+
+    # Record the tested source commit so the next --auto run can skip if unchanged
+    if [ -n "$AUTOTEST_SRC_COMMIT" ] && [ "$AUTOTEST_SRC_COMMIT" != "unknown" ]; then
+        printf '%s\n' "$AUTOTEST_SRC_COMMIT" > /var/db/ibs-autotest-last-commit
+        echo "=== Recorded last-tested commit: $AUTOTEST_SRC_COMMIT ===" >> "$LOG"
+    fi
+}
+
+load_rc_config $name
+run_rc_command "$1"
+RCEOF
+
+    chmod 555 "$RCD_SERVICE"
+    log_success "rc.d service installed: ${RCD_SERVICE}"
+
+    # Enable it for the next boot only; it self-disables after running.
+    # Use the literal service name — ${name} is only defined inside the rc.d script.
+    sysrc ibs_autotest_enable=YES
+    log_success "ibs_autotest enabled for next boot (self-disables after run)"
+}
+
+# ── --auto orchestration ───────────────────────────────────────────────────
+
+auto_mode() {
+    _email="${1:-$REPORT_EMAIL}"
+
+    # Step 0: Fetch latest from GitHub so the comparison reflects remote HEAD,
+    # not whatever happens to be in the local working tree.
+    if [ -d "$SRC_DIR/.git" ]; then
+        # Ensure origin points to the configured REPO_URL (may have changed)
+        _cur_remote=$(git -C "$SRC_DIR" remote get-url origin 2>/dev/null || echo "")
+        if [ "$_cur_remote" != "$REPO_URL" ]; then
+            log_info "Updating origin remote: ${_cur_remote} → ${REPO_URL}"
+            git -C "$SRC_DIR" remote set-url origin "$REPO_URL" 2>/dev/null || true
+        fi
+
+        log_info "Fetching latest from ${REPO_URL} branch ${BRANCH}..."
+        if [ $DRY_RUN -eq 0 ]; then
+            git -C "$SRC_DIR" fetch origin "$BRANCH" 2>/dev/null || \
+                log_warning "git fetch failed — falling back to local HEAD for commit check"
+        else
+            log_info "Would run: git fetch origin ${BRANCH} (dry run)"
+        fi
+    fi
+
+    # Resolve the remote HEAD using the unambiguous full ref path with --verify
+    # (branch names with slashes confuse plain rev-parse and produce stdout noise)
+    _current_commit=$(git -C "$SRC_DIR" rev-parse --verify \
+                          "refs/remotes/origin/${BRANCH}" 2>/dev/null || \
+                      git -C "$SRC_DIR" rev-parse --verify HEAD 2>/dev/null || echo "")
+
+    # Check if this commit was already built and tested
+    if [ -n "$_current_commit" ] && [ -f "$LAST_COMMIT_FILE" ]; then
+        _last_commit=$(cat "$LAST_COMMIT_FILE")
+        if [ "$_current_commit" = "$_last_commit" ]; then
+            log_info "Kernel is up to date — commit ${_current_commit} already tested"
+            _uptodate_body=$(
+                printf 'AMD PMU CI — Kernel is up to date and already tested\n'
+                printf '\n'
+                printf 'No new commits on branch %s since the last test run.\n' "$BRANCH"
+                printf '\n'
+                printf 'Host     : %s  (%s)\n' "$(uname -n)" "$(uname -r)"
+                printf 'Suite    : %s\n' "$SUITE"
+                printf 'Kernel   : %s\n' "$AUTO_KERNCONF"
+                printf 'Commit   : %s\n' "$_current_commit"
+                printf 'Repo     : %s\n' "$REPO_URL"
+                printf 'Date     : %s\n' "$(date)"
+                printf '\n'
+                printf 'Nothing to do — no build or reboot was started.\n'
+            )
+            mail_all "[AMD CI] Kernel up to date, already tested — $(hostname -s) $(date +%Y-%m-%d)" \
+                "$_uptodate_body" "$_email"
+            generate_html_skipped_report "$_current_commit" "$BRANCH"
+            return 0
+        fi
+    fi
+
+    log_info "New commit detected: ${_current_commit}"
+    log_info "Auto mode: fetch → reset → build kernel → install → write sentinel → reboot"
+    log_info "Suite: ${SUITE}  Kernel: ${AUTO_KERNCONF}  Email: ${_email}"
+
+    check_boot_environment
+    check_root_privileges
+
+    # Step 1: Update local source tree to the fetched remote HEAD before building
+    if [ -d "$SRC_DIR/.git" ] && [ $DRY_RUN -eq 0 ]; then
+        log_info "Resetting ${SRC_DIR} to origin/${BRANCH}..."
+        git -C "$SRC_DIR" reset --hard "origin/${BRANCH}" || {
+            log_error "Failed to reset source tree to origin/${BRANCH}"
+            exit 1
+        }
+        git -C "$SRC_DIR" clean -fd > /dev/null 2>&1 || true
+    fi
+
+    # Step 2: Build kernel
+    build_kernel_from_src
+
+    # Step 3: Install kernel (marks /boot/kernel for next boot)
+    install_kernel_to_boot
+
+    # Step 4: Compile test suite (so rc.d service doesn't need to)
+    log_info "Pre-compiling test suite..."
+    compile_tests
+
+    # Step 5: Write sentinel
+    write_autotest_sentinel "$_email"
+
+    # Step 6: Install + enable rc.d service
+    install_rcd_service
+
+    # Step 7: Reboot
+    echo ""
+    echo "================================================================="
+    log_info "System is ready for auto-test reboot."
+    log_info "After reboot:"
+    log_info "  1. rc.d/ibs_autotest will run the ${SUITE} test suite"
+    log_info "  2. Report will be emailed to: ${_email}"
+    log_info "  3. Log at: /var/log/ibs-autotest.log"
+    log_info "  4. Service will self-disable (runs exactly once)"
+    log_info "  Fallback kernel: /boot/kernel.old"
+    echo "================================================================="
+    echo ""
+
+    confirm_cmd "Reboot now into the new kernel for automated test run" \
+        "reboot" || { log_info "Reboot cancelled. Run 'reboot' manually when ready."; return 0; }
+
+    [ $DRY_RUN -eq 0 ] && reboot || log_info "Dry run — would reboot here"
+}
 
 # Show usage information
 show_usage() {
     cat << EOF
-${CYAN}IBS Test Suite Manager v${SCRIPT_VERSION}${NC}
-${WHITE}Comprehensive testing tool for AMD Instruction-Based Sampling (IBS)${NC}
+${CYAN}════════════════════════════════════════════════════════════════${NC}
+${WHITE}  IBS Test Suite Manager  v${SCRIPT_VERSION}${NC}
+${CYAN}════════════════════════════════════════════════════════════════${NC}
 
-${YELLOW}USAGE:${NC}
+${BOLD}DESCRIPTION${NC}
+    This script manages the full lifecycle of AMD hardware performance
+    monitoring (PMU) tests on FreeBSD bare-metal systems.  It covers
+    three test suites:
+
+      IBS   — Instruction-Based Sampling (AMD-exclusive hardware feature)
+      UMCDF — Unified Memory Controller + Data Fabric PMU counters
+      PMC   — General-purpose hardware performance counters (hwpmc)
+
+    Tests are written in C using the ATF framework and run through kyua.
+    Each test is tagged with a severity level that drives the overall
+    pass/fail verdict:
+
+      CRITICAL — any single failure is an immediate overall FAIL
+      HIGH     — the suite FAIL if the pass rate drops below 95 %
+      MEDIUM   — the suite is CONDITIONAL if the pass rate drops below 80 %
+
+    The script can also build a custom FreeBSD kernel, schedule an
+    automated post-reboot test run, and deliver the result by email.
+
+${YELLOW}USAGE${NC}
     $0 [OPTIONS] [COMMAND]
+    $0                           # no arguments → interactive menu
 
-${YELLOW}COMMANDS:${NC}
-    --download          Sync IBS test suite from GitHub fork (experimental-port)
-    --compile           Build and install IBS test suite
-    --run-all           Execute complete IBS test suite with detailed reporting
-    --run TEST          Execute specific test (e.g., ibs_detect_test)
-    --list              List all available IBS tests
-    --report            Show detailed test results and statistics
-    --status            Show current IBS implementation status
-    --clean             Clean build artifacts
-    --loadmodule        Load cpuctl kernel module for hardware access
-    --fetch             Pull latest commits from origin (github.com/ojanerif/freebsd-ci-actions main)
-    --push              Push local commits to origin (github.com/ojanerif/freebsd-ci-actions main)
-    --commit            Sync tests/sys/amd/ibs/ and ci/tools/ to sos-git and push
-    --help              Show this help message
+${YELLOW}COMMANDS${NC}
 
-${YELLOW}OPTIONS:${NC}
-    -v, --verbose       Enable verbose output
-    -f, --force         Force operations (skip safety checks)
-    -n, --dry-run       Show what would be done without executing
-    --parallelism N     kyua parallelism level (default: hw.ncpu)
-    --results-dir DIR   directory for saved reports (default: work/results-<pid>)
-    -h, --help          Show this help message
+  ${BOLD}--download${NC}
+      Clone or update the FreeBSD fork that contains the test source.
+      Target: $REPO_URL  branch: $BRANCH
+      Destination: $SRC_DIR
+      On first run a fresh clone is performed.  On subsequent runs the
+      existing tree is reset to origin/$BRANCH (uncommitted changes are
+      discarded).  Requires root and an active Boot Environment as a
+      safety net.
 
-${YELLOW}EXAMPLES:${NC}
-    $0 --download --compile --run-all    # Complete workflow
-    $0 --compile --run-all               # Build and run (source already present)
-    $0 --run ibs_detect_test             # Run specific test
-    $0 --fetch                            # Pull latest changes from GitHub
-    $0 --push                             # Push local commits to GitHub
-    $0 --commit                           # Push tests to sos-git
-    $0 --list                            # List available tests
-    $0 --report                          # Show test results
+  ${BOLD}--compile${NC}
+      Build and install the test suite selected by --suite (default: IBS).
+      Runs 'make clean', 'make -j<ncpu>', and 'make install' inside the
+      suite source directory (tests/sys/amd/<suite>/).  Binaries land in
+      /usr/tests/sys/amd/<suite>/.  If the Kyuafile is missing it is
+      generated automatically.  Requires root.
 
-${YELLOW}SOURCES:${NC}
-    GitHub fork : $REPO_URL ($BRANCH)
-    sos-git     : ssh://git@sos-git.amd.com/freebsd-src.git ($SOS_BRANCH)
+  ${BOLD}--run-all${NC}
+      Execute the installed test suite with kyua and show live output.
+      Each result line is annotated with its [CATEGORY][SEVERITY] tag.
+      After all tests finish, a severity-based verdict is printed:
+        APPROVED      — all CRITICAL passed, HIGH ≥ 95 %, MEDIUM ≥ 80 %
+        CONDITIONAL   — CRITICAL/HIGH passed but MEDIUM < 80 %
+        NOT APPROVED  — any CRITICAL failed, or HIGH < 95 %
+      A plain-text report and a JUnit XML report are saved to
+      \$RESULTS_DIR (default: work/results-<pid>/).
+      Combine with --category to run only a subset of tests.
+      Requires root.
+
+  ${BOLD}--run TEST${NC}
+      Run a single named test binary (e.g. ibs_detect_test) through
+      kyua and print a focused pass/fail report.  Useful for debugging
+      a specific test case without running the full suite.  Requires
+      root.
+
+  ${BOLD}--list${NC}
+      List every test binary installed under \$TESTS_INSTALL_DIR, with
+      its category code, human-readable label, and severity level.
+      Also prints placeholder test areas that are defined in the plan
+      but not yet implemented, so the full roadmap is visible.
+
+  ${BOLD}--report${NC}
+      Re-display the last kyua run report in verbose mode (all result
+      filters: passed, skipped, expected_failure, broken, failed).
+      Also regenerates the JUnit XML file.  Does not run tests; reads
+      the existing kyua results database.
+
+  ${BOLD}--status${NC}
+      Snapshot of the current system state:
+        • CPU vendor and IBS CPUID/MSR feature-bit status
+        • Whether the GitHub fork has been cloned and its HEAD commit
+        • Whether tests are compiled and how many binaries are installed
+        • Whether the cpuctl device is present and MSRs are accessible
+        • Suggested next steps
+
+  ${BOLD}--clean${NC}
+      Remove build artifacts from the test source directory by running
+      'make clean'.  The work/ results directory is left intact so
+      previous reports are not lost; remove it manually if needed.
+
+  ${BOLD}--loadmodule${NC}
+      Load the cpuctl(4) kernel module (kldload cpuctl).  The cpuctl
+      device (/dev/cpuctl<N>) is required by tests that read or write
+      MSRs and CPUID leaves directly.  Equivalent to adding
+      'cpuctl_load="YES"' to /boot/loader.conf for persistence.
+      Requires root.
+
+  ${BOLD}--fetch${NC}
+      Pull the latest commits from origin/main of the freebsd-ci-actions
+      repo itself (github.com/ojanerif/freebsd-ci-actions).  Shows the
+      commits added since the previous HEAD.  Safe to run at any time;
+      will not overwrite local uncommitted changes.
+
+  ${BOLD}--push${NC}
+      Push local commits on main to origin/main of the freebsd-ci-actions
+      repo.  Checks how many commits are ahead of origin before pushing
+      and asks for confirmation.  Does nothing if already up-to-date.
+
+  ${BOLD}--commit${NC}
+      Sync test sources and CI tooling to the AMD sos-git mirror and
+      push.  Specifically:
+        • Copies tests/sys/amd/ibs/ into \$SOS_DIR/tests/sys/amd/ibs/
+        • Copies tests/sys/amd/pmc/ into \$SOS_DIR/tests/sys/amd/pmc/
+        • Copies ci/tools/           into \$SOS_DIR/ci/tools/
+        • Commits with message "amd: update tests and ci tools — <date>"
+        • Pushes HEAD to ssh://git@sos-git.amd.com/freebsd-src.git
+          branch $SOS_BRANCH
+      \$SOS_DIR must already be a valid git clone of that remote.
+      Asks for confirmation before committing and again before pushing.
+
+  ${BOLD}--auto${NC}
+      Fully-automated test cycle across a reboot.  Safe to run from cron —
+      no interactive prompts are issued.  Steps in order:
+
+        0. Check /var/db/ibs-autotest-last-commit against the current HEAD
+           of the source tree.  If they match, the source has not changed
+           since the last test run: a notification email is sent and the
+           script exits without building or rebooting.
+        1. Build the kernel: make -j<ncpu> buildkernel KERNCONF=<conf>
+           (source must already be present; run --download first).
+        2. Install the kernel: make installkernel; old kernel is saved
+           to /boot/kernel.old automatically by installkernel.
+        3. Mark the new kernel for next boot via nextboot(8).
+        4. Pre-compile the test suite so the rc.d service runs tests
+           immediately after boot without needing a build step.
+        5. Write a sentinel file to /var/db/ibs-autotest-sentinel that
+           records suite, categories, email, kernel config, and source
+           commit hash (AUTOTEST_SRC_COMMIT).
+        6. Install an rc.d service (/usr/local/etc/rc.d/ibs_autotest)
+           that fires once after the next boot, runs the test suite,
+           emails the report, then self-disables via sysrc.
+        7. Reboot immediately (no confirmation prompt).
+
+      After reboot the rc.d service runs unattended: it reads the
+      sentinel, executes run.sh --run-all, determines the verdict,
+      sends the full plain-text report to the configured email address
+      via the system MTA (dma → txsmtp.amd.com), and writes the tested
+      source commit to /var/db/ibs-autotest-last-commit so the next
+      --auto invocation can skip an unchanged tree.
+      Log: /var/log/ibs-autotest.log
+
+      Boot Environment safety check is skipped in --auto mode (the
+      operator is expected to have a safety net in place for unattended
+      operation; use --force or manual invocation for a checked build).
+
+  ${BOLD}--help${NC}
+      Show this help message and exit.
+
+${YELLOW}SUITE SELECTION${NC}
+    --suite IBS         Instruction-Based Sampling tests (default)
+    --suite UMCDF       UMC + Data Fabric PMU tests
+    --suite PMC         General hwpmc counter tests
+    --suite ALL         All suites in sequence (IBS → UMCDF → PMC)
+
+    Affects which source directory is compiled (--compile) and which
+    install directory is used for test runs (--run-all, --list, etc.).
+
+${YELLOW}CATEGORY SELECTION${NC}
+    Combine one or more --category flags with --run-all to run only
+    tests in those categories.  Internally a filtered Kyuafile is
+    generated so kyua only sees the selected test binaries.
+    --category can be repeated.
+
+    IBS categories:
+      TC-DET   Hardware Detection   Verify IBS feature bits in CPUID/MSR  [CRITICAL]
+      TC-MSR   MSR Control         Read/write IBS control MSRs             [CRITICAL]
+      TC-INT   Interrupt Delivery  IBS interrupt routing and delivery       [HIGH]
+      TC-DATA  Sample Accuracy     Validate IBS sample data fields          [HIGH]
+      TC-SMP   SMP / Per-CPU      Per-CPU IBS enable/disable on all cores  [HIGH]
+      TC-HWPMC hwpmc API          hwpmc(4) alloc/caps/info/runtime paths   [HIGH]
+      TC-DRV   Driver Access      cpuctl(4) ioctl and device-node access   [HIGH]
+      TC-CONC  Concurrency        Concurrent IBS enable from multiple threads [HIGH]
+      TC-SEC   Security           Access-control and invalid-input rejection [HIGH]
+      TC-API   Userspace API      High-level userspace PMC API paths       [MEDIUM]
+      TC-STR   Stress             CPU and memory stress under IBS sampling  [MEDIUM]
+      TC-UNIT  Unit Tests         Pure-software unit tests; no hardware needed [MEDIUM]
+
+    UMCDF categories:
+      TC-UMCDET  UMC/DF Detection  CPUID-based UMC and DF feature detection [CRITICAL]
+      TC-UMCPMC  UMC/DF PMC       UMC and DF counter read/write paths       [HIGH]
+      TC-UMCUNIT UMCDF Unit       Software unit tests for decode/map logic  [MEDIUM]
+
+${YELLOW}AUTO MODE OPTIONS${NC}
+    --kernconf CONF     Kernel configuration to build with make buildkernel
+                        (default: GENERIC).  Use AMD_IBS for the IBS-enabled
+                        config if it is present in the FreeBSD source tree.
+    --email ADDR        Email address for the post-reboot report.
+                        Default: ojanerif@amd.com
+                        Delivery uses the system MTA (dma → txsmtp.amd.com).
+
+${YELLOW}OPTIONS${NC}
+    -v, --verbose       Print additional diagnostic messages (git SHAs,
+                        kyua paths, filtered Kyuafile counts, etc.)
+    -f, --force         Skip the Boot Environment safety check.  Use only
+                        when you are certain a rollback path exists.
+    -n, --dry-run       Print what each step would do without executing
+                        anything.  No files are written, no commands run,
+                        no modules loaded, no reboots triggered.
+    --parallelism N     Number of parallel kyua workers (default: hw.ncpu).
+                        Set to 1 to serialize test execution.
+    --results-dir DIR   Directory where reports are saved after --run-all.
+                        Default: \$SCRIPT_DIR/work/results-<pid>
+    -h, --help          Show this help and exit.
+
+${YELLOW}EXAMPLES${NC}
+    # Full first-time IBS workflow
+    $0 --download --compile --run-all
+
+    # Run only unit and hwpmc-API tests (no hardware needed for unit)
+    $0 --run-all --category TC-UNIT --category TC-HWPMC
+
+    # Run UMCDF suite
+    $0 --suite UMCDF --compile --run-all
+
+    # Debug a single failing test
+    $0 --run ibs_detect_test
+
+    # Preview the auto workflow without touching anything
+    $0 --dry-run --auto --suite IBS --kernconf GENERIC --email me@amd.com
+
+    # Full automated kernel-build + reboot + test + email cycle
+    $0 --auto --suite IBS --kernconf GENERIC --email me@amd.com
+
+    # Sync changes to sos-git
+    $0 --commit
+
+    # Pull and push this repo's own CI actions
+    $0 --fetch
+    $0 --push
+
+${YELLOW}VERDICT CRITERIA${NC}
+    The overall verdict after --run-all is determined by severity thresholds
+    defined in the AMD IBS Testing Plan:
+
+      APPROVED      CRITICAL failures = 0, HIGH pass rate ≥ 95 %, MEDIUM ≥ 80 %
+      CONDITIONAL   CRITICAL failures = 0, HIGH pass rate ≥ 95 %, MEDIUM < 80 %
+      NOT APPROVED  Any CRITICAL test failed  —or—  HIGH pass rate < 95 %
+
+    Skipped and expected-failure results are excluded from pass-rate
+    calculations.
+
+${YELLOW}FILES${NC}
+    \$SCRIPT_DIR/tests/sys/amd/ibs/     IBS test source
+    \$SCRIPT_DIR/tests/sys/amd/umcdf/   UMCDF test source
+    /usr/tests/sys/amd/ibs/            Installed IBS tests (kyua target)
+    /usr/tests/sys/amd/umcdf/          Installed UMCDF tests
+    \$RESULTS_DIR/report.txt            Plain-text run report
+    \$RESULTS_DIR/report.xml            JUnit XML (for CI systems)
+    /var/db/ibs-autotest-sentinel      --auto sentinel (removed after run)
+    /usr/local/etc/rc.d/ibs_autotest   --auto rc.d service (self-disables)
+    /var/log/ibs-autotest.log          --auto post-reboot run log
+
+${YELLOW}SOURCES${NC}
+    GitHub fork : $REPO_URL  (branch: $BRANCH)
+    sos-git     : ssh://git@sos-git.amd.com/freebsd-src.git  (branch: $SOS_BRANCH)
     Work dir    : $SCRIPT_DIR/work/
 
-${YELLOW}REQUIREMENTS:${NC}
-    - Root privileges for MSR access and test execution
-    - AMD CPU with IBS support (Family 10h+)
-    - FreeBSD with experimental-port kernel
+${YELLOW}REQUIREMENTS${NC}
+    - Root privileges (MSR access, module loading, test execution)
+    - AMD CPU with IBS support (Family 10h or later)
+    - FreeBSD 13+ with kyua installed (pkg install kyua)
+    - cpuctl(4) module available (kldload cpuctl  or  --loadmodule)
+    - For --auto: FreeBSD source tree at $SRC_DIR  (run --download)
+    - For email delivery: system MTA configured (dma default on FreeBSD)
 
 EOF
 }
@@ -229,9 +949,14 @@ log_verbose() {
 # Confirm before executing an important command.
 # Usage: confirm_cmd "short description" "full command string"
 # Returns 0 to proceed, 1 if the user cancels.
+# In AUTO_MODE or FORCE mode, always proceeds without prompting.
 confirm_cmd() {
     _cc_desc="$1"
     _cc_cmd="$2"
+    if [ $AUTO_MODE -eq 1 ] || [ $FORCE -eq 1 ]; then
+        log_verbose "Auto/force mode: proceeding without confirmation: ${_cc_desc}"
+        return 0
+    fi
     printf '\n'
     printf '%s\n' "${CYAN}── Command ──────────────────────────────────────────────────────${NC}"
     [ -n "$_cc_desc" ] && printf '  %s%s%s\n' "$DIM" "$_cc_desc" "$NC"
@@ -247,6 +972,10 @@ confirm_cmd() {
 
 # Safety checks
 check_boot_environment() {
+    if [ $AUTO_MODE -eq 1 ]; then
+        log_verbose "Auto mode: skipping boot environment check"
+        return 0
+    fi
     if [ $FORCE -eq 1 ]; then
         log_warning "Skipping boot environment check (--force enabled)"
         return 0
@@ -515,7 +1244,7 @@ commit_to_sos() {
 
         confirm_cmd "Push to remote sos-git (irreversible)" \
             "git push origin $SOS_BRANCH" || return 1
-        git push origin "$SOS_BRANCH" || {
+        git push origin "HEAD:$SOS_BRANCH" || {
             log_error "Failed to push to sos-git"
             exit 1
         }
@@ -588,10 +1317,425 @@ push_to_remote() {
     fi
 }
 
+# HTML helpers — used by generate_html_report and generate_html_index
+_he() { printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'; }
+
+generate_html_report() {
+    # All summary globals (TOTAL_TESTS, PASSED_TESTS …) and TMP_MATRIX must be in scope.
+    _hr_file="$RESULTS_DIR/report.html"
+    _run_name=$(basename "$RESULTS_DIR")
+
+    # Verdict string + CSS class
+    if [ "$VERDICT_FAIL" -eq 0 ]; then
+        if [ "$MED_PASS_PCT" -lt 0 ] || [ "$MED_PASS_PCT" -ge 80 ]; then
+            _vtext="APPROVED"; _vcls="v-approved"
+        else
+            _vtext="CONDITIONAL"; _vcls="v-conditional"
+        fi
+    else
+        _vtext="NOT APPROVED"; _vcls="v-rejected"
+    fi
+
+    # Overall pass rate (excl. skip/xfail)
+    _hr_denom=$((PASSED_TESTS + FAILED_TESTS + BROKEN_TESTS))
+    [ "$_hr_denom" -gt 0 ] && _hr_rate=$(( PASSED_TESTS * 100 / _hr_denom )) || _hr_rate=0
+
+    # Severity HIGH / MEDIUM strings
+    if [ "$HIGH_PASS_PCT" -lt 0 ]; then
+        _high_str="N/A"; _high_cls=""
+    elif [ "$HIGH_PASS_PCT" -ge 95 ]; then
+        _high_str="${HIGH_PASS_PCT}% &mdash; PASS"; _high_cls="sc-pass"
+    else
+        _high_str="${HIGH_PASS_PCT}% &mdash; FAIL"; _high_cls="sc-fail"
+    fi
+    if [ "$MED_PASS_PCT" -lt 0 ]; then
+        _med_str="N/A"; _med_cls=""
+    elif [ "$MED_PASS_PCT" -ge 80 ]; then
+        _med_str="${MED_PASS_PCT}% &mdash; PASS"; _med_cls="sc-pass"
+    else
+        _med_str="${MED_PASS_PCT}% &mdash; FAIL"; _med_cls="sc-fail"
+    fi
+    if [ "$CRIT_FAIL" -eq 0 ]; then
+        _crit_str="0 failed &mdash; PASS"; _crit_cls="sc-pass"
+    else
+        _crit_str="${CRIT_FAIL} failed &mdash; FAIL"; _crit_cls="sc-fail"
+    fi
+
+    # Matrix rows from TMP_MATRIX (pipe-delimited: tc|cat|sev|status|dur)
+    _mrows=""
+    while IFS='|' read -r _tc _cat _sev _st _tm; do
+        _tce=$(_he "$_tc")
+        case "$_st" in
+            passed)  _rcls="r-pass";   _slbl="PASS"  ;;
+            failed)  _rcls="r-fail";   _slbl="FAIL"  ;;
+            skipped) _rcls="r-skip";   _slbl="SKIP"  ;;
+            xfail)   _rcls="r-xfail";  _slbl="XFAIL" ;;
+            broken)  _rcls="r-broken"; _slbl="BRKN"  ;;
+            *)       _rcls="";         _slbl="$_st"  ;;
+        esac
+        case "$_sev" in
+            CRITICAL) _sevcls="s-crit" ;;
+            HIGH)     _sevcls="s-high" ;;
+            MEDIUM)   _sevcls="s-med"  ;;
+            *)        _sevcls=""       ;;
+        esac
+        _mrows="${_mrows}<tr class=\"${_rcls}\"><td class=\"tc\">${_tce}</td><td>${_cat}</td><td class=\"${_sevcls}\">${_sev}</td><td><span class=\"badge ${_rcls}\">${_slbl}</span></td><td class=\"dur\">${_tm}</td></tr>
+"
+    done < "$TMP_MATRIX"
+
+    _gen_date=$(_he "$(date)")
+    _sys_esc=$(_he "$(uname -srm)")
+
+    cat > "$_hr_file" << HTMLEOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AMD IBS CI &mdash; ${_run_name}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.5}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+header{background:#161b22;border-bottom:1px solid #30363d;padding:20px 32px}
+header h1{font-size:20px;font-weight:600;color:#e6edf3}
+header .meta{color:#8b949e;font-size:12px;margin-top:4px;font-family:monospace}
+.container{max-width:1400px;margin:0 auto;padding:24px 32px}
+.verdict-banner{border-radius:8px;padding:16px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px}
+.v-approved{background:#0d4a1f;border:1px solid #3fb950}
+.v-conditional{background:#3d2b00;border:1px solid #d29922}
+.v-rejected{background:#3d0b0b;border:1px solid #f85149}
+.verdict-text{font-size:22px;font-weight:700;letter-spacing:1px}
+.v-approved .verdict-text{color:#3fb950}
+.v-conditional .verdict-text{color:#d29922}
+.v-rejected .verdict-text{color:#f85149}
+.verdict-sub{color:#8b949e;font-size:13px}
+.stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px;text-align:center}
+.stat-card .num{font-size:28px;font-weight:700;line-height:1.1}
+.stat-card .lbl{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.c-total .num{color:#e6edf3}
+.c-pass .num{color:#3fb950}
+.c-fail .num{color:#f85149}
+.c-skip .num{color:#d29922}
+.c-broken .num{color:#db6d28}
+.c-rate .num{color:#58a6ff}
+.section-title{font-size:13px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.sev-table{width:100%;border-collapse:collapse;margin-bottom:24px;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+.sev-table th{background:#21262d;padding:10px 14px;text-align:left;font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.sev-table td{padding:10px 14px;border-top:1px solid #30363d}
+.sc-pass{color:#3fb950;font-weight:600}
+.sc-fail{color:#f85149;font-weight:600}
+.s-crit{color:#f85149;font-weight:700}
+.s-high{color:#d29922;font-weight:600}
+.s-med{color:#58a6ff;font-weight:600}
+.matrix-wrap{overflow-x:auto;margin-bottom:24px}
+table.matrix{width:100%;border-collapse:collapse;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+table.matrix th{background:#21262d;padding:9px 12px;text-align:left;font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;font-weight:500;position:sticky;top:0}
+table.matrix td{padding:7px 12px;border-top:1px solid #21262d;font-family:monospace;font-size:12px}
+table.matrix td.tc{max-width:440px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.matrix td.dur{color:#8b949e;white-space:nowrap}
+tr.r-fail{background:#1f0e0e}
+tr.r-broken{background:#1f1400}
+tr.r-skip{background:#161b22;opacity:.7}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:monospace}
+.badge.r-pass{background:#0d4a1f;color:#3fb950}
+.badge.r-fail{background:#3d0b0b;color:#f85149}
+.badge.r-skip{background:#2d2700;color:#d29922}
+.badge.r-broken{background:#2d1800;color:#db6d28}
+.badge.r-xfail{background:#0d2a3d;color:#58a6ff}
+footer{background:#161b22;border-top:1px solid #30363d;padding:16px 32px;color:#8b949e;font-size:12px;display:flex;gap:24px;align-items:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>AMD IBS CI &mdash; Test Run Report</h1>
+  <div class="meta">Run: ${_run_name} &nbsp;&bull;&nbsp; Generated: ${_gen_date} &nbsp;&bull;&nbsp; ${_sys_esc}</div>
+</header>
+<div class="container">
+
+<div class="verdict-banner ${_vcls}">
+  <div class="verdict-text">VERDICT: ${_vtext}</div>
+  <div class="verdict-sub">Pass rate (excl. skip): ${_hr_rate}% &nbsp;&bull;&nbsp; Parallelism: ${PARALLELISM}</div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card c-total"><div class="num">${TOTAL_TESTS}</div><div class="lbl">Total</div></div>
+  <div class="stat-card c-pass"><div class="num">${PASSED_TESTS}</div><div class="lbl">Passed</div></div>
+  <div class="stat-card c-fail"><div class="num">${FAILED_TESTS}</div><div class="lbl">Failed</div></div>
+  <div class="stat-card c-skip"><div class="num">${SKIPPED_TESTS}</div><div class="lbl">Skipped</div></div>
+  <div class="stat-card c-broken"><div class="num">${BROKEN_TESTS}</div><div class="lbl">Broken</div></div>
+  <div class="stat-card c-rate"><div class="num">${_hr_rate}%</div><div class="lbl">Pass Rate</div></div>
+</div>
+
+<div class="section-title">Severity Criteria</div>
+<table class="sev-table">
+<thead><tr><th>Severity</th><th>Threshold</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td class="s-crit">CRITICAL</td><td>0 failures required</td><td class="${_crit_cls}">${_crit_str}</td></tr>
+<tr><td class="s-high">HIGH</td><td>&ge; 95% pass rate required</td><td class="${_high_cls}">${_high_str}</td></tr>
+<tr><td class="s-med">MEDIUM</td><td>&ge; 80% pass rate required</td><td class="${_med_cls}">${_med_str}</td></tr>
+</tbody>
+</table>
+
+<div class="section-title">Test Results Matrix</div>
+<div class="matrix-wrap">
+<table class="matrix">
+<thead><tr><th>Test Case</th><th>Category</th><th>Severity</th><th>Status</th><th>Duration</th></tr></thead>
+<tbody>
+${_mrows}
+</tbody>
+</table>
+</div>
+
+</div>
+<footer>
+  <a href="report.txt">Raw report (.txt)</a>
+  <a href="report.xml">JUnit XML (.xml)</a>
+  <a href="../">&#8592; All runs</a>
+</footer>
+</body>
+</html>
+HTMLEOF
+
+    log_success "HTML report  : ${_hr_file}"
+}
+
+generate_html_index() {
+    _idx_file="$SCRIPT_DIR/work/index.html"
+    _hostname=$(hostname)
+    _now=$(date)
+
+    # Scan all results dirs, newest first by name (datetime names sort correctly)
+    _rows=""
+    for _d in $(ls -dt "$SCRIPT_DIR/work/results-"* 2>/dev/null); do
+        _n=$(basename "$_d")
+        _rpt="$_d/report.txt"
+        [ -f "$_rpt" ] || continue
+
+        _date=$(grep "^Generated  :" "$_rpt" 2>/dev/null | sed 's/Generated  : //' | head -1)
+        [ -z "$_date" ] && _date="—"
+
+        _verdict=$(grep "^VERDICT:" "$_rpt" 2>/dev/null | head -1 | sed 's/VERDICT: //')
+        _verdict_short=$(printf '%s' "$_verdict" | sed 's/ —.*//')
+        case "$_verdict_short" in
+            APPROVED)     _vc="v-approved"    ;;
+            CONDITIONAL)  _vc="v-conditional" ;;
+            SKIPPED)      _vc="v-skipped"     ;;
+            *)            _vc="v-rejected"    ;;
+        esac
+
+        _total=$(awk '/^Tests Run :/{print $NF}' "$_rpt" 2>/dev/null | head -1)
+        _pass=$(awk '/^Passed    :/{print $3}' "$_rpt" 2>/dev/null | head -1)
+        _fail=$(awk '/^Failed    :/{print $3}' "$_rpt" 2>/dev/null | head -1)
+        _skip=$(awk '/^Skipped   :/{print $3}' "$_rpt" 2>/dev/null | head -1)
+        _brkn=$(awk '/^Broken    :/{print $3}' "$_rpt" 2>/dev/null | head -1)
+        _pct=$(grep "^Passed    :" "$_rpt" 2>/dev/null | sed 's/.*(\([0-9]*\)%).*/\1/' | head -1)
+        [ -z "$_total" ] && _total="—"
+        [ -z "$_pass"  ] && _pass="—"
+        [ -z "$_fail"  ] && _fail="—"
+        [ -z "$_skip"  ] && _skip="—"
+        [ -z "$_brkn"  ] && _brkn="—"
+        [ -n "$_pct" ] && _pct_disp="${_pct}%" || _pct_disp="—"
+
+        _has_html=""; [ -f "$_d/report.html" ] && _has_html=" <a href=\"${_n}/report.html\">html</a>"
+
+        _rows="${_rows}<tr>
+<td><a href=\"${_n}/report.html\">${_n}</a></td>
+<td class=\"dt\">${_date}</td>
+<td><span class=\"vbadge ${_vc}\">${_verdict_short}</span></td>
+<td class=\"num\">${_pct_disp}</td>
+<td class=\"num\">${_total}</td>
+<td class=\"num c-pass\">${_pass}</td>
+<td class=\"num c-fail\">${_fail}</td>
+<td class=\"num c-skip\">${_skip}</td>
+<td class=\"num c-broken\">${_brkn}</td>
+<td class=\"links\"><a href=\"${_n}/report.txt\">txt</a>${_has_html} <a href=\"${_n}/report.xml\">xml</a></td>
+</tr>
+"
+    done
+
+    cat > "$_idx_file" << IDXEOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>AMD IBS CI &mdash; Test Run History</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.5}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+header{background:#161b22;border-bottom:1px solid #30363d;padding:20px 32px;display:flex;align-items:baseline;gap:16px}
+header h1{font-size:20px;font-weight:600}
+header .sub{color:#8b949e;font-size:12px}
+.container{max-width:1400px;margin:0 auto;padding:24px 32px}
+.refresh-note{color:#8b949e;font-size:11px;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+th{background:#21262d;padding:10px 12px;text-align:left;font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+td{padding:9px 12px;border-top:1px solid #21262d;font-size:13px}
+td.dt{font-family:monospace;font-size:12px;color:#8b949e;white-space:nowrap}
+td.num{text-align:right;font-family:monospace;font-weight:600}
+td.links{font-size:12px;white-space:nowrap}
+td.c-pass{color:#3fb950}
+td.c-fail{color:#f85149}
+td.c-skip{color:#d29922}
+td.c-broken{color:#db6d28}
+tr:hover{background:#1c2128}
+.vbadge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.v-approved{background:#0d4a1f;color:#3fb950;border:1px solid #3fb950}
+.v-conditional{background:#3d2b00;color:#d29922;border:1px solid #d29922}
+.v-rejected{background:#3d0b0b;color:#f85149;border:1px solid #f85149}
+.v-skipped{background:#1c2332;color:#79c0ff;border:1px solid #388bfd}
+footer{background:#161b22;border-top:1px solid #30363d;padding:14px 32px;color:#8b949e;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>AMD IBS CI &mdash; Test Run History</h1>
+  <div class="sub">${_hostname} &nbsp;&bull;&nbsp; Last updated: ${_now}</div>
+</header>
+<div class="container">
+<div class="refresh-note">Page auto-refreshes every 60 s</div>
+<table>
+<thead>
+<tr>
+  <th>Run</th><th>Date / Time</th><th>Verdict</th>
+  <th style="text-align:right">Pass%</th>
+  <th style="text-align:right">Total</th>
+  <th style="text-align:right">Pass</th>
+  <th style="text-align:right">Fail</th>
+  <th style="text-align:right">Skip</th>
+  <th style="text-align:right">Brkn</th>
+  <th>Files</th>
+</tr>
+</thead>
+<tbody>
+${_rows}
+</tbody>
+</table>
+</div>
+<footer>FreeBSD IBS CI &mdash; darkhttpd &mdash; ${_hostname}</footer>
+</body>
+</html>
+IDXEOF
+
+    log_success "HTML index   : ${_idx_file}"
+}
+
+# Generate a "SKIPPED — no kernel changes" HTML report + update the index.
+# Called by auto_mode when the remote commit is already the last-tested commit.
+# Args: $1=commit  $2=branch
+generate_html_skipped_report() {
+    _sk_commit="${1:-unknown}"
+    _sk_branch="${2:-unknown}"
+    _sk_ts=$(date +%Y-%m-%d_%H-%M-%S)
+    _sk_dir="$SCRIPT_DIR/work/results-${_sk_ts}-skipped"
+    _sk_txt="$_sk_dir/report.txt"
+    _sk_html="$_sk_dir/report.html"
+    _sk_date=$(date)
+    _sk_run=$(basename "$_sk_dir")
+
+    mkdir -p "$_sk_dir"
+
+    # Plain-text report — format matches what generate_html_index parses
+    cat > "$_sk_txt" << SKIPTXTEOF
+AMD PMU CI — Kernel Up To Date
+Suite      : ${SUITE}
+Kernel     : ${AUTO_KERNCONF}
+Host       : $(uname -n)  ($(uname -r))
+Generated  : ${_sk_date}
+
+VERDICT: SKIPPED — No kernel changes since last tested commit
+
+No new commits on branch ${_sk_branch} since the last test run.
+Commit     : ${_sk_commit}
+Repo       : ${REPO_URL}
+
+Nothing to do — no build or reboot was started.
+SKIPTXTEOF
+
+    # Minimal JUnit XML so the index links don't 404
+    cat > "$_sk_dir/report.xml" << SKIPXMLEOF
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites><testsuite name="skipped" tests="0" skipped="0" failures="0" errors="0"/></testsuites>
+SKIPXMLEOF
+
+    _sk_date_esc=$(_he "$_sk_date")
+    _sk_sys_esc=$(_he "$(uname -srm)")
+    _sk_commit_esc=$(_he "$_sk_commit")
+    _sk_branch_esc=$(_he "$_sk_branch")
+    _sk_repo_esc=$(_he "$REPO_URL")
+    _sk_host_esc=$(_he "$(hostname) ($(uname -r))")
+
+    cat > "$_sk_html" << SKIPHTMLEOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AMD IBS CI &mdash; ${_sk_run}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.5}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+header{background:#161b22;border-bottom:1px solid #30363d;padding:20px 32px}
+header h1{font-size:20px;font-weight:600;color:#e6edf3}
+header .meta{color:#8b949e;font-size:12px;margin-top:4px;font-family:monospace}
+.container{max-width:900px;margin:0 auto;padding:24px 32px}
+.verdict-banner{border-radius:8px;padding:20px 24px;margin-bottom:24px;background:#1c2332;border:1px solid #388bfd}
+.verdict-text{font-size:22px;font-weight:700;letter-spacing:1px;color:#79c0ff}
+.verdict-sub{color:#8b949e;font-size:13px;margin-top:6px}
+.info-table{width:100%;border-collapse:collapse;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:24px}
+.info-table td{padding:10px 16px;border-top:1px solid #21262d;font-size:13px}
+.info-table td:first-child{color:#8b949e;width:140px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.info-table td:last-child{font-family:monospace}
+footer{background:#161b22;border-top:1px solid #30363d;padding:16px 32px;color:#8b949e;font-size:12px;display:flex;gap:24px;align-items:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>AMD IBS CI &mdash; Test Run Report</h1>
+  <div class="meta">Run: ${_sk_run} &nbsp;&bull;&nbsp; Generated: ${_sk_date_esc} &nbsp;&bull;&nbsp; ${_sk_sys_esc}</div>
+</header>
+<div class="container">
+
+<div class="verdict-banner">
+  <div class="verdict-text">SKIPPED &mdash; No kernel changes</div>
+  <div class="verdict-sub">The kernel is already up to date. No build, install, or reboot was started.</div>
+</div>
+
+<table class="info-table">
+<tbody>
+<tr><td>Branch</td><td>${_sk_branch_esc}</td></tr>
+<tr><td>Commit</td><td>${_sk_commit_esc}</td></tr>
+<tr><td>Repo</td><td>${_sk_repo_esc}</td></tr>
+<tr><td>Suite</td><td>${SUITE}</td></tr>
+<tr><td>Kernel conf</td><td>${AUTO_KERNCONF}</td></tr>
+<tr><td>Host</td><td>${_sk_host_esc}</td></tr>
+<tr><td>Generated</td><td>${_sk_date_esc}</td></tr>
+</tbody>
+</table>
+
+</div>
+<footer>
+  <a href="report.txt">Raw report (.txt)</a>
+  <a href="../">&#8592; All runs</a>
+</footer>
+</body>
+</html>
+SKIPHTMLEOF
+
+    generate_html_index
+    log_success "Skipped HTML report: ${_sk_html}"
+}
+
 # Test execution and reporting
 run_all_tests() {
     log_info "Executing complete IBS test suite..."
     preflight_checks
+    load_module
 
     if [ ! -d "$TESTS_INSTALL_DIR" ]; then
         log_error "Tests not installed. Run --compile first"
@@ -630,18 +1774,30 @@ run_all_tests() {
         TMP_HIGH_F="/tmp/ibs_high_f_$$.tmp"
         TMP_MED_P="/tmp/ibs_med_p_$$.tmp"
         TMP_MED_F="/tmp/ibs_med_f_$$.tmp"
+        TMP_MATRIX="/tmp/ibs_matrix_$$.tmp"
         for f in "$TMP_CRIT_F" "$TMP_HIGH_P" "$TMP_HIGH_F" "$TMP_MED_P" "$TMP_MED_F"; do
             echo 0 > "$f"
         done
+        > "$TMP_MATRIX"
+
+        # Use filtered Kyuafile when categories are selected
+        _kyuafile_opt=""
+        if [ -n "$TMP_KYUAFILE" ] && [ -f "$TMP_KYUAFILE" ]; then
+            _kyuafile_opt="--kyuafile $TMP_KYUAFILE"
+            _cat_label=" [categories: $CATEGORIES]"
+        else
+            _cat_label=""
+        fi
 
         log_verbose "Running kyua test suite (parallelism: $PARALLELISM)..."
-        confirm_cmd "Run full IBS test suite in $TESTS_INSTALL_DIR (parallelism: $PARALLELISM)" \
-            "kyua -v parallelism=$PARALLELISM test" || return 1
+        confirm_cmd "Run${_cat_label} test suite in $TESTS_INSTALL_DIR (parallelism: $PARALLELISM)" \
+            "kyua -v parallelism=$PARALLELISM test${_kyuafile_opt:+ $_kyuafile_opt}" || return 1
 
         # Run kyua and process each line as it arrives; capture exit code via
         # temp file because the pipe subshell would swallow it otherwise.
         # Each result line gets a [CATEGORY][SEVERITY] prefix from get_test_meta().
-        { kyua -v parallelism="$PARALLELISM" test 2>&1; echo $? > "$TMP_EXIT"; } | \
+        # shellcheck disable=SC2086
+        { kyua -v parallelism="$PARALLELISM" test $_kyuafile_opt 2>&1; echo $? > "$TMP_EXIT"; } | \
         while IFS= read -r line; do
             PREFIX=""
             SEV=""
@@ -654,6 +1810,9 @@ run_all_tests() {
                     SEV=$(printf '%s' "$META" | cut -d: -f3)
                     SCOL=$(severity_color "$SEV")
                     PREFIX="${SCOL}[${CAT}]${NC}${SCOL}[${SEV}]${NC} "
+                    TESTID=$(printf '%s' "$line" | sed 's/ *->.*//; s|.*/ibs/||' | sed 's/[[:space:]]*$//')
+                    _TIME=$(printf '%s' "$line" | grep -oE '\[[0-9]+\.[0-9]+s\]' | tr -d '[]')
+                    [ -z "$_TIME" ] && _TIME="—"
                     ;;
             esac
             case "$line" in
@@ -663,6 +1822,7 @@ run_all_tests() {
                         HIGH)   echo $(( $(cat "$TMP_HIGH_P") + 1 )) > "$TMP_HIGH_P" ;;
                         MEDIUM) echo $(( $(cat "$TMP_MED_P")  + 1 )) > "$TMP_MED_P"  ;;
                     esac
+                    printf '%s|%s|%s|%s|%s\n' "$TESTID" "$CAT" "$SEV" "passed" "$_TIME" >> "$TMP_MATRIX"
                     printf '%s\n' "${PREFIX}${GREEN}✓${NC} ${line}"
                     ;;
                 *" -> "*"failed"*)
@@ -672,14 +1832,17 @@ run_all_tests() {
                         HIGH)     echo $(( $(cat "$TMP_HIGH_F") + 1 )) > "$TMP_HIGH_F" ;;
                         MEDIUM)   echo $(( $(cat "$TMP_MED_F")  + 1 )) > "$TMP_MED_F"  ;;
                     esac
+                    printf '%s|%s|%s|%s|%s\n' "$TESTID" "$CAT" "$SEV" "failed" "$_TIME" >> "$TMP_MATRIX"
                     printf '%s\n' "${PREFIX}${RED}✗${NC} ${line}"
                     ;;
                 *" -> "*"skipped"*)
                     echo $(( $(cat "$TMP_SKIP") + 1 )) > "$TMP_SKIP"
+                    printf '%s|%s|%s|%s|%s\n' "$TESTID" "$CAT" "$SEV" "skipped" "$_TIME" >> "$TMP_MATRIX"
                     printf '%s\n' "${PREFIX}${YELLOW}⊘${NC} ${line}"
                     ;;
                 *" -> "*"expected_failure"*)
                     echo $(( $(cat "$TMP_XFAIL") + 1 )) > "$TMP_XFAIL"
+                    printf '%s|%s|%s|%s|%s\n' "$TESTID" "$CAT" "$SEV" "xfail" "$_TIME" >> "$TMP_MATRIX"
                     printf '%s\n' "${PREFIX}${CYAN}~${NC} ${line}"
                     ;;
                 *" -> "*"broken"*)
@@ -689,6 +1852,7 @@ run_all_tests() {
                         HIGH)     echo $(( $(cat "$TMP_HIGH_F") + 1 )) > "$TMP_HIGH_F" ;;
                         MEDIUM)   echo $(( $(cat "$TMP_MED_F")  + 1 )) > "$TMP_MED_F"  ;;
                     esac
+                    printf '%s|%s|%s|%s|%s\n' "$TESTID" "$CAT" "$SEV" "broken" "$_TIME" >> "$TMP_MATRIX"
                     printf '%s\n' "${PREFIX}${RED}⚠${NC} ${line}"
                     ;;
                 *)
@@ -907,6 +2071,86 @@ run_all_tests() {
             done
         fi
 
+        # ── Test results matrix ───────────────────────────────────
+        echo ""
+        echo "===================================================================================================="
+        echo "TEST RESULTS MATRIX"
+        echo "===================================================================================================="
+        printf "  %-76s %-11s %-9s %-8s %s\n" \
+            "TEST CASE" "CAT" "SEV" "STATUS" "TIME"
+        printf "  %-76s %-11s %-9s %-8s %s\n" \
+            "----------------------------------------------------------------------------" "-----------" "---------" "--------" "------"
+        while IFS='|' read -r _tc _cat _sev _st _tm; do
+            case "$_st" in
+                passed)  _scol="$GREEN";  _stxt="PASS"  ;;
+                failed)  _scol="$RED";    _stxt="FAIL"  ;;
+                skipped) _scol="$YELLOW"; _stxt="SKIP"  ;;
+                xfail)   _scol="$CYAN";   _stxt="XFAIL" ;;
+                broken)  _scol="$RED";    _stxt="BRKN"  ;;
+                *)       _scol="$WHITE";  _stxt="$_st"  ;;
+            esac
+            case "$_sev" in
+                CRITICAL) _sevcol="$RED" ;;
+                HIGH)     _sevcol="$YELLOW" ;;
+                MEDIUM)   _sevcol="$CYAN" ;;
+                *)        _sevcol="$WHITE" ;;
+            esac
+            printf "  %-76s %-11s ${_sevcol}%-9s${NC} ${_scol}%-8s${NC} %s\n" \
+                "$_tc" "$_cat" "$_sev" "$_stxt" "$_tm"
+        done < "$TMP_MATRIX"
+        printf "  %-76s %-11s %-9s %-8s\n" \
+            "----------------------------------------------------------------------------" "-----------" "---------" "--------"
+        echo ""
+        printf "  Total: %d   ${GREEN}Pass: %d (%d%%)${NC}" \
+            "$TOTAL_TESTS" "$PASSED_TESTS" "$PASSED_PERCENT"
+        if [ "$FAILED_TESTS" -gt 0 ]; then
+            printf "   ${RED}Fail: %d${NC}" "$FAILED_TESTS"
+        else
+            printf "   Fail: %d" "$FAILED_TESTS"
+        fi
+        printf "   Skip: %d   XFail: %d   Brkn: %d\n" \
+            "$SKIPPED_TESTS" "$XFAIL_TESTS" "$BROKEN_TESTS"
+        echo ""
+        # Pass rate excluding skipped and expected failures
+        _denom=$((PASSED_TESTS + FAILED_TESTS + BROKEN_TESTS))
+        if [ "$_denom" -gt 0 ]; then
+            _rate=$(( PASSED_TESTS * 100 / _denom ))
+            printf "  Pass rate (excl. skipped/xfail): ${BOLD}%d%%${NC}\n" "$_rate"
+        else
+            printf "  Pass rate: N/A\n"
+        fi
+        printf "  CRITICAL: %d failed   HIGH: " "$CRIT_FAIL"
+        if [ "$HIGH_PASS_PCT" -lt 0 ]; then
+            printf "N/A"
+        else
+            printf "%d%%" "$HIGH_PASS_PCT"
+        fi
+        printf "   MEDIUM: "
+        if [ "$MED_PASS_PCT" -lt 0 ]; then
+            printf "N/A"
+        else
+            printf "%d%%" "$MED_PASS_PCT"
+        fi
+        printf "\n\n"
+        if [ "$VERDICT_FAIL" -eq 0 ]; then
+            if [ "$MED_PASS_PCT" -lt 0 ] || [ "$MED_PASS_PCT" -ge 80 ]; then
+                printf "  ${GREEN}${BOLD}VERDICT: APPROVED${NC}\n"
+            else
+                printf "  ${YELLOW}${BOLD}VERDICT: CONDITIONAL — CRITICAL/HIGH passed; MEDIUM below 80%%${NC}\n"
+            fi
+        else
+            printf "  ${RED}${BOLD}VERDICT: NOT APPROVED${NC}\n"
+            [ "$CRIT_FAIL" -gt 0 ] && \
+                printf "  Reason: %d CRITICAL test(s) failed\n" "$CRIT_FAIL"
+            [ "$HIGH_PASS_PCT" -ge 0 ] && [ "$HIGH_PASS_PCT" -lt 95 ] && \
+                printf "  Reason: HIGH pass rate %d%% below the 95%% threshold\n" "$HIGH_PASS_PCT"
+        fi
+        echo "===================================================================================================="
+
+        generate_html_report
+        generate_html_index
+        rm -f "$TMP_MATRIX"
+
         echo ""
         log_info "Full report : $REPORT_TXT"
         log_info "JUnit XML   : $REPORT_XML"
@@ -919,6 +2163,7 @@ run_specific_test() {
     TEST_NAME="$1"
     log_info "Executing specific test: $TEST_NAME"
     preflight_checks
+    load_module
 
     if [ ! -d "$TESTS_INSTALL_DIR" ]; then
         log_error "Tests not installed. Run --compile first"
@@ -1168,9 +2413,8 @@ clean_artifacts() {
 }
 
 load_module() {
-    log_info "Loading cpuctl kernel module..."
-
     if [ $DRY_RUN -eq 0 ]; then
+        log_info "Loading cpuctl kernel module..."
         if kldstat | grep -q cpuctl; then
             log_success "cpuctl module already loaded"
         else
@@ -1183,8 +2427,18 @@ load_module() {
             }
             log_success "cpuctl module loaded successfully"
         fi
+
+        log_info "Loading hwpmc kernel module..."
+        if kldstat | grep -q hwpmc; then
+            log_success "hwpmc module already loaded"
+        else
+            confirm_cmd "Load hwpmc kernel module (required for PMC API tests)" \
+                "kldload hwpmc" || return 1
+            kldload hwpmc || log_warning "Failed to load hwpmc — TC-HWPMC tests will skip"
+            log_success "hwpmc module loaded successfully"
+        fi
     else
-        log_info "Would load cpuctl module (dry run)"
+        log_info "Would load cpuctl and hwpmc modules (dry run)"
     fi
 }
 
@@ -1232,19 +2486,22 @@ show_menu() {
         fi
 
         printf '%s\n' "${CYAN}=================================================================${NC}"
+        printf "  Suite  : ${BOLD}%s${NC}  (change with --suite IBS|UMCDF|PMC|ALL)\n" "$SUITE"
         printf '\n'
-        printf '  %s1)%s Run all tests\n'               "$BOLD" "$NC"
-        printf '  %s2)%s Run specific test\n'           "$BOLD" "$NC"
-        printf '  %s3)%s Compile & install tests\n'     "$BOLD" "$NC"
-        printf '  %s4)%s Download source from GitHub\n' "$BOLD" "$NC"
-        printf '  %s5)%s Load kernel module (cpuctl)\n' "$BOLD" "$NC"
-        printf '  %s6)%s Show status\n'                 "$BOLD" "$NC"
-        printf '  %s7)%s List tests\n'                  "$BOLD" "$NC"
-        printf '  %s8)%s View last report\n'            "$BOLD" "$NC"
-        printf '  %s9)%s Commit to sos-git\n'           "$BOLD" "$NC"
+        printf '  %s1)%s Run all tests (suite: %s)\n'      "$BOLD" "$NC" "$SUITE"
+        printf '  %s2)%s Run specific test\n'              "$BOLD" "$NC"
+        printf '  %s3)%s Run by category\n'                "$BOLD" "$NC"
+        printf '  %s4)%s Compile & install tests\n'        "$BOLD" "$NC"
+        printf '  %s5)%s Download source from GitHub\n'    "$BOLD" "$NC"
+        printf '  %s6)%s Load kernel module (cpuctl)\n'    "$BOLD" "$NC"
+        printf '  %s7)%s Show status\n'                    "$BOLD" "$NC"
+        printf '  %s8)%s List tests\n'                     "$BOLD" "$NC"
+        printf '  %sr)%s View last report\n'               "$BOLD" "$NC"
+        printf '  %s9)%s Commit to sos-git\n'              "$BOLD" "$NC"
         printf '  %sf)%s Fetch from GitHub (origin main)\n' "$BOLD" "$NC"
-        printf '  %sp)%s Push to GitHub (origin main)\n'    "$BOLD" "$NC"
-        printf '  %s0)%s Exit\n'                        "$BOLD" "$NC"
+        printf '  %sp)%s Push to GitHub (origin main)\n'   "$BOLD" "$NC"
+        printf '  %sa)%s AUTO: build kernel + reboot + test + email\n' "$BOLD" "$NC"
+        printf '  %s0)%s Exit\n'                           "$BOLD" "$NC"
         printf '\n'
         printf '%sChoice: %s' "$BOLD" "$NC"
         read -r MENU_CHOICE
@@ -1253,6 +2510,8 @@ show_menu() {
         case "$MENU_CHOICE" in
             1)
                 check_root_privileges
+                _idir=$(suite_install_dir "$SUITE")
+                TESTS_INSTALL_DIR="$_idir"
                 run_all_tests
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
@@ -1262,6 +2521,8 @@ show_menu() {
                 read -r _test
                 if [ -n "$_test" ]; then
                     check_root_privileges
+                    _idir=$(suite_install_dir "$SUITE")
+                    TESTS_INSTALL_DIR="$_idir"
                     run_specific_test "$_test"
                 else
                     log_error "No test name given"
@@ -1270,36 +2531,58 @@ show_menu() {
                 read -r _dummy
                 ;;
             3)
-                check_boot_environment
-                check_root_privileges
-                compile_tests
+                printf '%sCategories (space-separated, e.g. TC-DET TC-MSR): %s' "$BOLD" "$NC"
+                read -r _cats
+                if [ -n "$_cats" ]; then
+                    check_root_privileges
+                    CATEGORIES="$_cats"
+                    _idir=$(suite_install_dir "$SUITE")
+                    TESTS_INSTALL_DIR="$_idir"
+                    TMP_KYUAFILE=$(build_filtered_kyuafile "$TESTS_INSTALL_DIR")
+                    run_all_tests
+                    CATEGORIES=""
+                    TMP_KYUAFILE=""
+                else
+                    log_error "No categories given"
+                fi
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
                 ;;
             4)
                 check_boot_environment
                 check_root_privileges
-                sync_repository
+                TESTS_DIR=$(suite_src_dir "$SUITE")
+                TESTS_INSTALL_DIR=$(suite_install_dir "$SUITE")
+                compile_tests
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
                 ;;
             5)
+                check_boot_environment
+                check_root_privileges
+                sync_repository
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            6)
                 check_root_privileges
                 load_module
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
                 ;;
-            6)
+            7)
                 show_status
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
                 ;;
-            7)
+            8)
+                _idir=$(suite_install_dir "$SUITE")
+                TESTS_INSTALL_DIR="$_idir"
                 list_tests
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
                 ;;
-            8)
+            r|R)
                 show_report
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
@@ -1316,6 +2599,17 @@ show_menu() {
                 ;;
             p|P)
                 push_to_remote
+                printf '\nPress Enter to return to menu...'
+                read -r _dummy
+                ;;
+            a|A)
+                printf '%sEmail for report [%s]: %s' "$BOLD" "$REPORT_EMAIL" "$NC"
+                read -r _mail
+                [ -n "$_mail" ] && REPORT_EMAIL="$_mail"
+                printf '%sKernel config [%s]: %s' "$BOLD" "$AUTO_KERNCONF" "$NC"
+                read -r _kc
+                [ -n "$_kc" ] && AUTO_KERNCONF="$_kc"
+                auto_mode "$REPORT_EMAIL"
                 printf '\nPress Enter to return to menu...'
                 read -r _dummy
                 ;;
@@ -1381,6 +2675,45 @@ while [ $# -gt 0 ]; do
         --commit)
             COMMAND="commit"
             ;;
+        --auto)
+            COMMAND="auto"
+            AUTO_MODE=1
+            ;;
+        --suite)
+            shift
+            if [ $# -eq 0 ]; then
+                log_error "--suite requires IBS|UMCDF|PMC|ALL"
+                exit 1
+            fi
+            case "$1" in
+                IBS|UMCDF|PMC|ALL) SUITE="$1" ;;
+                *) log_error "--suite: unknown suite '$1' (use IBS|UMCDF|PMC|ALL)"; exit 1 ;;
+            esac
+            ;;
+        --category)
+            shift
+            if [ $# -eq 0 ]; then
+                log_error "--category requires a TC-* code"
+                exit 1
+            fi
+            CATEGORIES="${CATEGORIES} $1"
+            ;;
+        --email)
+            shift
+            if [ $# -eq 0 ]; then
+                log_error "--email requires an address"
+                exit 1
+            fi
+            REPORT_EMAIL="$1"
+            ;;
+        --kernconf)
+            shift
+            if [ $# -eq 0 ]; then
+                log_error "--kernconf requires a config name"
+                exit 1
+            fi
+            AUTO_KERNCONF="$1"
+            ;;
         -v|--verbose)
             VERBOSE=1
             ;;
@@ -1422,6 +2755,14 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+# Apply suite-aware directory overrides before dispatching
+TESTS_DIR=$(suite_src_dir "$SUITE")
+TESTS_INSTALL_DIR=$(suite_install_dir "$SUITE")
+
+# When categories are selected, build a filtered Kyuafile (stored in TMP_KYUAFILE)
+# run_all_tests reads TMP_KYUAFILE when set.
+TMP_KYUAFILE=""
+
 # Execute command
 case $COMMAND in
     download)
@@ -1436,6 +2777,9 @@ case $COMMAND in
         ;;
     run-all)
         check_root_privileges
+        if [ -n "$CATEGORIES" ]; then
+            TMP_KYUAFILE=$(build_filtered_kyuafile "$TESTS_INSTALL_DIR")
+        fi
         run_all_tests
         ;;
     run-specific)
@@ -1465,6 +2809,9 @@ case $COMMAND in
         ;;
     commit)
         commit_to_sos
+        ;;
+    auto)
+        auto_mode "$REPORT_EMAIL"
         ;;
     *)
         if [ -z "$COMMAND" ]; then

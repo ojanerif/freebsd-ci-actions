@@ -28,6 +28,11 @@ on:
         type: string
         required: false
         default: '/tmp/obj'
+      tests_dir:
+        description: 'Relative path to the ATF test suite directory inside ci-actions/'
+        type: string
+        required: false
+        default: 'ci-actions/tests/sys/amd/ibs'
 
 jobs:
   build-and-test:
@@ -64,12 +69,12 @@ jobs:
           objdir:        ${{ inputs.objdir }}
           build_timeout: '600'
 
-      - name: Run IBS ATF tests
+      - name: Run ATF tests
         id: test
         if: steps.build.outputs.build_status == 'success'
         uses: ./ci-actions/actions/run-atf-tests
         with:
-          tests_dir:  ci-actions/tests/sys/amd/ibs
+          tests_dir:  ${{ inputs.tests_dir }}
           srcdir:     ${{ inputs.srcdir }}
           kernconf:   ${{ inputs.kernconf }}
 
@@ -109,3 +114,31 @@ jobs:
         with:
           issue: SWLSVROS-6363
           transition: "Done"
+
+      # ------------------------------------------------------------------
+      # Email notification on failure — no-op if NOTIFY_EMAIL is not set.
+      # Also requires SMTP_SERVER, SMTP_USERNAME, SMTP_PASSWORD secrets.
+      # ------------------------------------------------------------------
+      - name: Send failure notification email
+        if: >
+          failure() &&
+          steps.test.outputs.test_status == 'failed' &&
+          secrets.NOTIFY_EMAIL != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port:    ${{ secrets.SMTP_PORT || 587 }}
+          username:       ${{ secrets.SMTP_USERNAME }}
+          password:       ${{ secrets.SMTP_PASSWORD }}
+          to:             ${{ secrets.NOTIFY_EMAIL }}
+          from:           AMD FreeBSD CI <noreply@amd.com>
+          subject:        "[CI FAIL] AMD PMU tests failed on ${{ github.ref_name }}"
+          body: |
+            FreeBSD PMU CI pipeline failed.
+
+            Branch  : ${{ github.ref_name }}
+            Commit  : ${{ github.sha }}
+            Run     : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Please review the test report and address failing test cases.
+            JUnit XML and HTML report are available as workflow artifacts for 90 days.

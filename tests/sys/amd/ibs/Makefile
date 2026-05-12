@@ -36,7 +36,11 @@ ATF_TESTS_C=	ibs_cpu_test \
 		ibs_hwpmc_caps_test \
 		ibs_hwpmc_runtime_test \
 		ibs_mem_stress_test \
-		ibs_cpu_stress_test
+		ibs_cpu_stress_test \
+		ibs_unit_ldlat_test \
+		ibs_unit_fetch_ctl_fields_test \
+		ibs_unit_op_data_fields_test \
+		ibs_unit_msr_range_test
 
 ATF_TESTS_SH=	ibs_swfilt_test
 

@@ -71,8 +71,21 @@ make
 ## Running
 
 ```sh
-# Full test manager (clones source, builds, installs, runs)
-./run.sh
+# Interactive menu
+sudo ./run.sh
+
+# Compile and install tests
+sudo ./run.sh --compile --suite IBS
+
+# Run all tests and print a verdict report
+sudo ./run.sh --run-all --suite IBS
+
+# Run a specific category only
+sudo ./run.sh --run-all --suite UMCDF --category TC-UMCUNIT
+
+# Fully-automated cycle: build kernel → reboot → test → email report
+# Safe for cron — no confirmation prompts; skips if source unchanged
+sudo ./run.sh --auto --suite IBS --kernconf AMD_IBS --email you@amd.com
 
 # Run with kyua directly after building
 cd tests/sys/amd/ibs
@@ -82,6 +95,19 @@ kyua report
 # Single test case
 kyua test -k 'ibs_detect_test:ibs_detect'
 ```
+
+### Cron example
+
+```
+# Run the automated test cycle nightly at 02:00
+0 2 * * * root /usr/home/osvaldo/freebsd-ci-actions/run.sh --auto \
+    --suite IBS --kernconf AMD_IBS \
+    --email ojanerif@amd.com >> /var/log/ibs-autotest-cron.log 2>&1
+```
+
+The `--auto` command is idempotent: if the source tree (`dev/freebsd`) has not
+changed since the last completed test run, it sends a "already tested" notification
+and exits without building or rebooting.
 
 ---
 

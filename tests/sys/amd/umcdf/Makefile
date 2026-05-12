@@ -13,7 +13,14 @@ KYUAFILE=	yes
 
 ATF_TESTS_C=	umcdf_cpuid_test \
 		umcdf_df_test \
-		umcdf_umc_test
+		umcdf_umc_test \
+		umcdf_unit_zen_map_test \
+		umcdf_unit_df_encoding_test \
+		umcdf_unit_perfmonv2_test \
+		umcdf_unit_zen_name_test \
+		umcdf_unit_capabilities_test \
+		umcdf_unit_vendor_test \
+		umcdf_unit_df_config_dispatch_test
 
 LIBADD+=	pmc
 

@@ -10,15 +10,25 @@ name: IBS Full Test
 
 on:
   push:
+    branches:
+      - main
+      - develop
+      - 'osvaldo/**'
     paths:
       - 'tests/sys/amd/ibs/**'
       - 'sys/dev/hwpmc/**'
       - 'sys/amd64/amd64/ibs*'
       - 'sys/modules/hwpmc/**'
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'    # Nightly — full suite (no stress)
+    - cron: '0 2 * * 0'    # Weekly (Sunday) — full suite including stress
   workflow_dispatch:
 
 jobs:
   ibs-tests:
     uses: ojanerif/freebsd-ci-actions/.github/workflows/ibs-full-test.yml@main
+    secrets: inherit
     with:
       kernconf: AMD_IBS

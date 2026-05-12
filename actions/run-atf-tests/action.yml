@@ -60,7 +60,7 @@ runs:
       with:
         name: kyua-junit-xml
         path: ${{ steps.run.outputs.results_path }}
-        retention-days: 30
+        retention-days: 90
         if-no-files-found: warn
 
     - name: Upload HTML report
@@ -69,5 +69,17 @@ runs:
       with:
         name: kyua-html-report
         path: kyua-report/
-        retention-days: 30
+        retention-days: 90
         if-no-files-found: warn
+
+    - name: Upload PMC log files (if present)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pmc-logs
+        path: |
+          *.pmc
+          pmcstat*.log
+          pmc-*.log
+        retention-days: 30
+        if-no-files-found: ignore

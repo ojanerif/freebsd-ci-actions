@@ -75,5 +75,30 @@ end_time="$(date +%s)"
 elapsed=$((end_time - start_time))
 log_info "Build finished: status=$build_status elapsed=${elapsed}s"
 
+# ---------------------------------------------------------------------------
+# Capture kernel config + git SHA for long-term archival (180 days, §8.1)
+# ---------------------------------------------------------------------------
+if [ "$build_status" = "success" ]; then
+	mkdir -p _kernel-info
+	# Git SHA of the FreeBSD source tree
+	git -C "$SRCDIR" log -1 --format="%H %ai %s" > _kernel-info/git-sha.txt 2>/dev/null || true
+	# Kernel config file (try common locations)
+	for kconf in \
+		"${SRCDIR}/sys/amd64/conf/${KERNCONF}" \
+		"${SRCDIR}/sys/conf/${KERNCONF}" \
+		"${MAKEOBJDIRPREFIX}/${SRCDIR}/sys/${KERNCONF}/${KERNCONF}"; do
+		if [ -f "$kconf" ]; then
+			cp "$kconf" "_kernel-info/${KERNCONF}.conf"
+			break
+		fi
+	done
+	printf 'KERNCONF=%s\n'              "$KERNCONF"              >> _kernel-info/build-meta.txt
+	printf 'SRCDIR=%s\n'               "$SRCDIR"                >> _kernel-info/build-meta.txt
+	printf 'MAKEOBJDIRPREFIX=%s\n'     "$MAKEOBJDIRPREFIX"      >> _kernel-info/build-meta.txt
+	printf 'PARALLEL_JOBS=%s\n'        "$PARALLEL_JOBS"         >> _kernel-info/build-meta.txt
+	printf 'BUILD_ELAPSED_SECONDS=%s\n' "$elapsed"              >> _kernel-info/build-meta.txt
+	printf 'BUILD_DATE=%s\n'           "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> _kernel-info/build-meta.txt
+fi
+
 printf 'build_status=%s\n' "$build_status" >> "$GITHUB_OUTPUT"
 [ "$build_status" = "success" ]

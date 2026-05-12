@@ -71,5 +71,5 @@ runs:
       with:
         name: system-info
         path: _sysinfo/
-        retention-days: 30
+        retention-days: 90
         if-no-files-found: warn

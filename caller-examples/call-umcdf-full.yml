@@ -1,0 +1,34 @@
+# Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# call-umcdf-full.yml — Example caller for UMC + Data Fabric (UMCDF) tests.
+#
+# Covers §4.1 umc-tests.yml and df-tests.yml from the CI/CD Design Proposal.
+# Copy to ojanerif/freebsd-src/.github/workflows/umcdf-tests.yml
+
+name: UMCDF Test Suite (UMC + Data Fabric)
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'osvaldo/**'
+    paths:
+      - 'tests/sys/amd/umcdf/**'
+      - 'sys/dev/hwpmc/**'
+      - 'sys/modules/hwpmc/**'
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * *'    # Nightly at 03:00 UTC (offset from IBS to avoid contention)
+    - cron: '0 3 * * 0'    # Weekly (Sunday) 03:00 UTC — full suite including stress
+  workflow_dispatch:
+
+jobs:
+  umcdf-tests:
+    uses: ojanerif/freebsd-ci-actions/.github/workflows/ibs-full-test.yml@main
+    secrets: inherit
+    with:
+      kernconf: AMD_IBS
+      tests_dir: ci-actions/tests/sys/amd/umcdf

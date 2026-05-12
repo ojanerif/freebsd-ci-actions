@@ -10,10 +10,13 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   smoke:
     uses: ojanerif/freebsd-ci-actions/.github/workflows/ibs-full-test.yml@main
+    secrets: inherit
     with:
       kernconf: AMD_IBS

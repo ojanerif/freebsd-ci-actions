@@ -5,3 +5,10 @@ test_suite("FreeBSD")
 atf_test_program{name="umcdf_cpuid_test", }
 atf_test_program{name="umcdf_df_test", }
 atf_test_program{name="umcdf_umc_test", }
+atf_test_program{name="umcdf_unit_capabilities_test", }
+atf_test_program{name="umcdf_unit_df_config_dispatch_test", }
+atf_test_program{name="umcdf_unit_df_encoding_test", }
+atf_test_program{name="umcdf_unit_perfmonv2_test", }
+atf_test_program{name="umcdf_unit_vendor_test", }
+atf_test_program{name="umcdf_unit_zen_map_test", }
+atf_test_program{name="umcdf_unit_zen_name_test", }

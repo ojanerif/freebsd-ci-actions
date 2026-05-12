@@ -42,7 +42,7 @@ runs:
       with:
         name: ibs-junit-results
         path: ${{ inputs.results_xml }}
-        retention-days: 30
+        retention-days: 90
         if-no-files-found: warn
 
     - name: Upload HTML report artifact
@@ -50,5 +50,5 @@ runs:
       with:
         name: ibs-html-report
         path: ${{ inputs.report_html_dir }}/
-        retention-days: 30
+        retention-days: 90
         if-no-files-found: warn

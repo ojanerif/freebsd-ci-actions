@@ -56,3 +56,12 @@ runs:
         path: _build.log
         retention-days: 30
         if-no-files-found: warn
+
+    - name: Upload kernel config and git SHA (180-day retention per §8.1)
+      if: steps.build.outputs.build_status == 'success'
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-config-and-sha
+        path: _kernel-info/
+        retention-days: 180
+        if-no-files-found: warn
