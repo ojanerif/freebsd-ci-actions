@@ -3,4 +3,5 @@ syntax(2)
 test_suite("FreeBSD")
 
 atf_test_program{name="hwpmc_exterr_test", }
+atf_test_program{name="hwpmc_grouping_test", }
 atf_test_program{name="pmcstat_tsc_test", }

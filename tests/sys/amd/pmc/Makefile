@@ -5,12 +5,14 @@
 
 TESTSDIR=	${TESTSBASE}/sys/amd/pmc
 
-ATF_TESTS_C=	hwpmc_exterr_test
+ATF_TESTS_C=	hwpmc_exterr_test hwpmc_grouping_test
 ATF_TESTS_SH=	pmcstat_tsc_test
 
 TEST_METADATA.hwpmc_exterr_test+=	required_user="root"
+TEST_METADATA.hwpmc_grouping_test+=	required_user="root"
 
 LIBADD.hwpmc_exterr_test+=	pmc
+LIBADD.hwpmc_grouping_test+=	pmc
 
 # ATF is installed as a port at /usr/local (not a base library on this host).
 # Set LDADD_atf_c so atf.test.mk's per-test LDADD expansion finds the library,
