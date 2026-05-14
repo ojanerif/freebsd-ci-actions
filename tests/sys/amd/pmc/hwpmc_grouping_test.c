@@ -4,6 +4,12 @@
  * Copyright (c) 2026 Advanced Micro Devices, Inc.
  *
  * Author: Davi Chaves Azevedo
+ *
+ * Purpose:
+ *   Validate FreeBSD hwpmc(4) grouping behavior for AMD Zen core PMCs.
+ *   The cases cover row disposition reporting, concurrent process-scope
+ *   PMU event allocation, and the expected system-sampling failure path
+ *   when no log file has been configured.
  */
 
 #include <sys/param.h>

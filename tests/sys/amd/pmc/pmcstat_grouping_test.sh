@@ -5,6 +5,11 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 # Author: Davi Chaves Azevedo
+#
+# Purpose:
+#   Verify pmcstat(8) grouped system-counting output with two software
+#   PMCs.  The test checks that repeated -s options remain independent
+#   counter columns in interval output.
 
 pmcstat_check_support()
 {
