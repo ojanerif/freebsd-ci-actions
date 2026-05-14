@@ -6,7 +6,7 @@
 TESTSDIR=	${TESTSBASE}/sys/amd/pmc
 
 ATF_TESTS_C=	hwpmc_exterr_test hwpmc_grouping_test
-ATF_TESTS_SH=	pmcstat_tsc_test
+ATF_TESTS_SH=	pmcstat_tsc_test pmcstat_grouping_test
 
 TEST_METADATA.hwpmc_exterr_test+=	required_user="root"
 TEST_METADATA.hwpmc_grouping_test+=	required_user="root"
