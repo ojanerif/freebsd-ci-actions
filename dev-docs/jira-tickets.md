@@ -1,8 +1,8 @@
 ---
 title: Jira Tickets — FreeBSD-Tests project
-last_modified: 2026-05-13
+last_modified: 2026-05-14
 registered_in_jira: "000–010, 042–043"
-not_yet_registered: "011–025, 044–047"
+not_yet_registered: "011–026, 044–050"
 ---
 
 # Jira Tickets — FreeBSD-Tests
@@ -166,7 +166,7 @@ The `NOTIFY_EMAIL` step in `ibs-full-test.yml` uses `dawidd6/action-send-mail@v3
 The host-level `dma.conf` and `run.sh` SMTP path are already configured and verified (FreeBSD-Tests-010); this ticket covers only the GitHub Actions secrets and delivery verification to the list.
 Acceptance criteria: a CI failure on the self-hosted runner produces an email to the freebsd-test list within 5 minutes of job completion, from `freebsd-ci-actions@amd.com`, with the workflow run URL and failure count in the body.
 **Start:** Open
-**End:** —
+**End:** 2026-05-16
 **Status:** Open
 
 ---
@@ -354,4 +354,58 @@ Add a second self-hosted runner with labels `self-hosted,freebsd,intel` and a ca
 `ibs_smp_per_cpu_config` and `ibs_smp_cpu_migration` failed intermittently under high parallelism (192-CPU run) with MaxCnt readback mismatches and `EBUSY` on migration isolation. Two root causes: (A) retry loop capped at 3 — under full-system parallel load, in-flight NMIs re-arm the counter more than 3 times consecutively; (B) `ibs_smp_cpu_migration` read `orig_val` while IBS was potentially active on CPU 0, so a concurrent NMI mutated MaxCnt before the `verify_val` comparison. Fix: (A) retry limit raised 3→10; `write_msr(cpu, MSR_IBS_FETCH_CTL, 0ULL)` added as first statement in each retry iteration to quiesce NMIs; (B) `write_msr(original_cpu, MSR_IBS_FETCH_CTL, 0ULL)` added before reading `orig_val` in `smp_migration_thread`.
 **Found:** 2026-05-12
 **Resolved:** 2026-05-12
+**Status:** Closed
+
+---
+
+### FreeBSD-Tests-026
+**Summary:** FreeBSD-Tests-026 - IBS/STRESS: NMI rate-limit enforcement + stress suite + background runner
+**Description:**
+Three related deliverables captured in one story:
+
+1. **STRESS test suite** (`tests/sys/amd/stress/`): New standalone ATF suite with four 120-second test programs (`cpu_stress_test`, `mem_stress_test`, `net_stress_test`, `disk_stress_test`) and four matching background stressor binaries (`cpu_stressor`, `mem_stressor`, `net_stressor`, `disk_stressor`). Stressors run as background processes during IBS/L3/UMCDF/PMC runs to validate hardware counter correctness under sustained system load.
+
+2. **`--stress` / `--safe-ibs-rate` in run.sh**: New `run.sh` flags: `--stress` launches the four stressor binaries in the background before kyua starts and stops them cleanly after kyua finishes. `NET_STRESS_THREADS=2` is exported when used as background (down from 4 standalone) to reduce NMI amplification. `--safe-ibs-rate N` sets `dev.hwpmc.ibs.min_period=N` via sysctl before the run. Both flags work with `--run-all`, `--auto`, and are persisted in the autotest sentinel for the rc.d service.
+
+3. **`ibs_nmi_stress_test.c`** (`tests/sys/amd/ibs/`): New IBS ATF test (TC-INT, HIGH severity) with three cases:
+   - `ibs_nmi_high_rate_stability`: enables IBS Op at period 0x0400, runs CPU+memory stress threads for 120 s, verifies no hang or panic.
+   - `ibs_nmi_rate_limit_enforce`: reads `dev.hwpmc.ibs.min_period` sysctl; **SKIPs** with message "pending FreeBSD-Tests-026 kernel patch" if absent; asserts kernel clamps period below minimum when present.
+   - `ibs_nmi_drain_under_load`: 100 iterations of enable IBS Fetch → 10µs sample → workaround #420 drain; asserts all drains complete before timeout and CTL reads 0 after each.
+
+**Root cause context:** Ali's NMI crash analysis (2026-05-14): high IBS sampling rate + heavy network load → NMI storm → network stack panic. The `ibs_nmi_rate_limit_enforce` test guards against regression once the kernel-side `dev.hwpmc.ibs.min_period` sysctl lands.
+
+**Panic recovery:** `--last-test` flag and persistent live log (`/var/log/ibs-last-run.log`, `/var/log/ibs-last-test.state`) survive kernel panics; `--last-test` shows the last completed test so the culprit can be identified post-reboot.
+
+**Start:** 2026-05-14
+**End:** —
+**Status:** Open (rate-limit enforce test blocked: kernel patch)
+
+---
+
+### FreeBSD-Tests-048 *(unplanned)*
+**Summary:** FreeBSD-Tests-048 - Bug: net_stress_connection_rate SIGSEGV — fd stored in in_port_t races with port overwrite
+**Description:**
+`net_stress_connection_rate` exited with signal 11 (SIGSEGV) before the 120 s test duration elapsed. `connrate_server` read `arg->port` (type `in_port_t`, uint16_t) to obtain the listen socket fd, but the main thread overwrote `arg.port` with `ntohs(real_port)` between the `pthread_create` call and the server thread's first instruction. When the server got the port number (e.g. 54321) as its fd, `FD_SET(54321, &rfds)` in a 1024-bit fd_set overflowed the backing array → SIGSEGV. Same latent bug existed in `tcp_echo_server` via `tcp_echo_ctx::port`. Fix: added dedicated `int srv_fd` field to both `connrate_arg` and `tcp_echo_ctx`; server threads read from `srv_fd`; `port` now holds only the real ephemeral port from the start and is never overwritten.
+**Found:** 2026-05-14
+**Resolved:** 2026-05-14
+**Status:** Closed
+
+---
+
+### FreeBSD-Tests-049 *(unplanned)*
+**Summary:** FreeBSD-Tests-049 - Bug: net_stress_unix_socketpair terminates with SIGPIPE during cleanup shutdown
+**Description:**
+`net_stress_unix_socketpair` showed "broken: Empty test result or no new line" after running ~120 s. Root cause: after `stop=true` the main thread calls `shutdown(pairs[i].fd[0], SHUT_RDWR)` while the producer thread may still be inside `send(fd[0], msg, …, 0)`. A `send()` call on a shut-down socket generates SIGPIPE; the default handler terminates the process, leaving ATF with no output line. Fix: `signal(SIGPIPE, SIG_IGN)` added at the top of the `net_stress_unix_socketpair` and `net_stress_loopback_tcp` ATF bodies (the echo server's `send()` has the same race with client close).
+**Found:** 2026-05-14
+**Resolved:** 2026-05-14
+**Status:** Closed
+
+---
+
+### FreeBSD-Tests-050 *(unplanned)*
+**Summary:** FreeBSD-Tests-050 - Bug: net_stress_loopback_tcp body timeout under parallel kyua execution
+**Description:**
+`net_stress_loopback_tcp` timed out at 200 s when kyua ran all 12 stress tests in parallel (parallelism=hw.ncpu). `cpu_stress_test` saturated all CPU cores, causing the echo server's tight `send()/recv()` loop to stall under scheduler starvation. After `stop=true`, each client still had an in-flight 64 KiB echo request; the server needed to complete those before the client threads could join. Under full CPU saturation, this teardown pushed past the 200 s ATF timeout. Root fix: `run.sh::run_all_tests()` now forces `PARALLELISM=1` when `SUITE=STRESS`, eliminating all cross-test resource contention. An additional `stress_monitor_loop` background process was added to print 10-second resource snapshots (CPU/mem/disk/net, elapsed/remaining) to `/dev/tty` during the ~24-minute sequential run.
+**Found:** 2026-05-14
+**Resolved:** 2026-05-14
 **Status:** Closed
