@@ -1,0 +1,81 @@
+# dev-docs/team/ownership.yaml
+# Module and file ownership map — dev-docs v3.4 Team Edition
+
+modules:
+  ibs-test-suite:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - tests/sys/amd/ibs/**
+      - dev-docs/modules/ibs-test-suite.md
+
+  pmc-tests:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - tests/sys/amd/pmc/**
+      - dev-docs/modules/pmc-tests.md
+
+  umcdf-tests:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - tests/sys/amd/umcdf/**
+      - dev-docs/modules/umcdf-tests.md
+
+  stress-tests:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - tests/sys/amd/stress/**
+      - dev-docs/modules/stress-tests.md
+
+  ci-actions-workflows:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - .github/workflows/**
+      - actions/**
+      - caller-examples/**
+      - dev-docs/modules/ci-actions-workflows.md
+
+  runner-setup:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - scripts/install-runner-freebsd.sh
+      - dev-docs/infra/runner-setup.md
+
+  linuxulator:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - dev-docs/infra/linuxulator.md
+
+  run-sh:
+    owner: Osvaldo J. Filho
+    reviewers: []
+    watchers: []
+    repo_id: root
+    paths:
+      - run.sh
+      - dev-docs/modules/run-sh.md
+
+policies:
+  unowned_file_behavior: warn
+  missing_reviewer_behavior: warn
+  external_repo_edit_behavior: ask-before-edit

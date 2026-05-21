@@ -1,0 +1,26 @@
+# dev-docs/team/policies.yaml
+# Collaboration and governance policy — dev-docs v3.4 Team Edition
+
+mode: single-user
+identity_required: true
+audit_required: true
+soft_locks: true
+stale_lock_hours: 24
+
+review_required_for:
+  - architecture
+  - security
+  - infrastructure
+  - database-schema
+  - external-api-contract
+  - production-incident
+
+ai_agent_rules:
+  may_append: true
+  may_annotate: true
+  may_edit_existing: false
+  must_log_requested_by: true
+  restricted_status_changes:
+    - PROPOSED -> ACTIVE
+    - ACTIVE -> INVALID
+    - ACTIVE -> SUPERSEDED
