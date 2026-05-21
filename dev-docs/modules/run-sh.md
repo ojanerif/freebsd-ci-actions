@@ -5,7 +5,7 @@ file: dev-docs/modules/run-sh.md
 keywords: [run.sh, auto_mode, confirm_cmd, AUTOTEST_SENTINEL, LAST_COMMIT_FILE, ibs_autotest, rc.d, cron, email, sentinel, kernel, build, install, reboot, AUTO_MODE]
 description: Local lifecycle manager for AMD PMU test suites — compile, run, report, commit, and --auto (kernel build + post-reboot test + email) with cron-safe no-prompt execution
 status: active
-last_modified: 2026-05-18
+last_modified: 2026-05-21
 ---
 
 # run.sh — Local Test Suite Lifecycle Manager
@@ -73,3 +73,19 @@ changed (cron would rebuild and reboot on every invocation).
 2026-05-18 | generate_html_report: _sys_esc changed from uname -srm to uname -a; header now shows full kernel version string on a second .meta line | run-sh
 2026-05-18 | generate_html_index: added Kernel column (release field from "System     :" line in report.txt, awk field 5); added --reindex flag to regenerate index.html without a full test run | run-sh
 2026-05-18 | generate_html_index: Kernel column now shows full "FreeBSD 16.0-CURRENT #N branch-slug" instead of only field 5; sed strips "FreeBSD hostname release" prefix, awk -F': ' cuts at build date | run-sh
+
+## [DECISION] [#000010] Migrate HTML docroot from work/ to /usr/local/www/darkhttpd
+**Date:** 2026-05-21
+**Status:** ACTIVE
+**Author:** Osvaldo J. Filho
+**Actor type:** ai-agent
+**Source:** ai-prompt
+**Session:** sess_2026-05-21_1818
+**Requested by:** usr_osvaldo
+**Related commit:** pending
+
+**Context:** darkhttpd was launched with `darkhttpd_dir` pointing to `$SCRIPT_DIR/work` in rc.conf, bypassing the system-default docroot `/usr/local/www/darkhttpd`. All run results and the HTML index lived inside the project repo working directory.
+**Decision:** Introduce `HTML_DIR=/usr/local/www/darkhttpd` in run.sh; all RESULTS_DIR defaults, generate_html_index, generate_html_skipped_report, show_last_test, and clean messaging now use `$HTML_DIR` instead of `$SCRIPT_DIR/work`. rc.conf updated to `darkhttpd_dir="/usr/local/www/darkhttpd"`. Existing work/ contents copied to the new location. darkhttpd restarted.
+**Rejected alternatives:** Symlink work/ → /usr/local/www/darkhttpd (adds indirection, confusing); keep work/ as docroot (non-standard, couples repo dir to web server).
+**Consequences:** run.sh, /etc/rc.conf; HTML_DIR env var may be overridden at runtime.
+2026-05-21 | HTML_DIR var introduced; docroot migrated from work/ to /usr/local/www/darkhttpd; rc.conf updated; all work/ path references in run.sh replaced with $HTML_DIR | run-sh | agent_claude
