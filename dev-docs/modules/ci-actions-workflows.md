@@ -49,6 +49,10 @@ Optional Jira integration is secrets-gated; no-op if secrets absent.
 
 ## [DECISION] Reusable workflow + composite actions over monolithic job
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Multiple repos (freebsd-src, future callers) need the same
 pipeline. Jira must be optional. Maintenance should be centralized.
 **Decision:** Single reusable workflow in `ojanerif/freebsd-ci-actions`.
@@ -59,6 +63,10 @@ always-on Jira (blocks callers without secrets).
 
 ## [DECISION] 30-day artifact retention on all uploads
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Balance storage costs vs debugging window (typically one sprint).
 **Decision:** `retention-days: 30` on every `actions/upload-artifact@v4`.
 Six artifact sets per run: system-info, kernel-build-log (failure only),
@@ -67,6 +75,10 @@ kyua-junit-xml, kyua-html-report, ibs-junit-results, ibs-html-report.
 
 ## [DECISION] 600s build timeout + 900s job ceiling
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** A hung kernel module build would block the single runner
 indefinitely; full kernel would take 1–2 hours.
 **Decision:** `timeout 600` wrapper in build.sh; job-level `timeout-minutes: 15`

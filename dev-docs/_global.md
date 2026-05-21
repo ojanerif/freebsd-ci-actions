@@ -28,6 +28,10 @@ The project is sponsored by AMD and tracked in Jira story SWLSVROS-6363.
 
 ## [DECISION] Self-hosted runner on bare metal, not GitHub-hosted
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** IBS requires MSR write access (/dev/cpuctl) and kernel module
 loading (kldload hwpmc.ko) — capabilities unavailable on GitHub-hosted Linux VMs.
 **Decision:** Bare-metal AMD EPYC host with FreeBSD + Linuxulator to run the
@@ -38,6 +42,10 @@ delegated kldload), GitHub-hosted (no FreeBSD/hardware access).
 
 ## [DECISION] Reusable workflow pattern over monolithic job
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Multiple caller repos need to trigger the same build/test/report
 pipeline; Jira integration should be optional.
 **Decision:** Single reusable workflow (`ibs-full-test.yml`) called by thin
@@ -48,6 +56,10 @@ nightmare), always-on Jira (blocks repos without Jira secrets).
 
 ## [DECISION] Tiered artifact retention aligned to CI/CD Design Proposal §8.1
 **Date:** 2026-05-11 (revised from 2026-04-30)
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-11_0000
 **Context:** Design proposal §8.1 specifies per-artifact retention tiers.
 Flat 30-day policy was incorrect.
 **Decision:** JUnit XML → 90 days; HTML reports → 90 days; system-info → 90 days;
@@ -58,6 +70,10 @@ setup-freebsd-build/action.yml, build-kernel/action.yml
 
 ## [DECISION] Rocky Linux 9 (rl9) packages for Linuxulator
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** GitHub Actions runner (.NET runtime) needs GLIBCXX 3.4.20+.
 CentOS 7 (default linux_base-c7) ships only 3.4.19.
 **Decision:** Use `linux_base-rl9` + `linux-rl9-icu` (Rocky Linux 9 base).

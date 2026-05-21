@@ -36,6 +36,10 @@ Engineering's own CI infrastructure, not for the GitHub Actions runner.
 
 ## [DECISION] Separate CI VM path from GitHub Actions path
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** FreeBSD Release Engineering has its own VM-based CI that pre-dates
 GitHub Actions. Both need to run the IBS test suite.
 **Decision:** Keep `ci/tools/` for the RE VM path. GitHub Actions path lives

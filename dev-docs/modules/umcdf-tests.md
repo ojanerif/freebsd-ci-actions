@@ -81,6 +81,10 @@ Runtime smoke tests gracefully skip when hwpmc UMC/DF support is absent.
 
 ## [DECISION] Separate umcdf/ from pmc/ directory
 **Date:** 2026-05-07
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-07_0000
 **Context:** The original `tests/sys/amd/pmc/` is a placeholder waiting for
 kernel hwpmc uncore support. UMCDF tests validate the hwpmc PMC API for UMC/DF
 hardware — a different scope from pmcstat(8) and general libpmc API tests planned
@@ -93,6 +97,10 @@ invocation to cover both directories.
 
 ## [DECISION] Shared header amd_umcdf_common.h, not inline per-file
 **Date:** 2026-05-07
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-07_0000
 **Context:** All three test programs need Zen generation classification and PMC
 lifecycle helpers; duplicating them per-file invites divergence.
 **Decision:** `amd_umcdf_common.h` provides all shared logic. ATF programs include
@@ -102,6 +110,10 @@ it directly (no separate .c compilation unit needed at this scale).
 
 ## [DECISION] Graceful skip for UMC runtime smoke when unsupported
 **Date:** 2026-05-07
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-07_0000
 **Context:** UMC PMC support in FreeBSD hwpmc is not yet complete for all Zen
 generations. Tests must not fail on hardware where support is missing.
 **Decision:** `umcdf_umc_runtime_smoke_if_supported` detects support at runtime

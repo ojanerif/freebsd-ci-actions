@@ -67,6 +67,10 @@ Three test tiers:
 
 ## [DECISION] Split ibs_utils.h (I/O) from ibs_decode.h (pure logic)
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Unit tests must run without hardware and without cpuctl; mixing
 MSR I/O into the decode helpers would make them impossible to unit-test.
 **Decision:** `ibs_utils.h` owns all hardware accessors. `ibs_decode.h` is
@@ -77,6 +81,10 @@ dependencies).
 
 ## [DECISION] Test tier design (unit 70% / integration 20% / E2E 10%)
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** E2E tests require rare bare-metal AMD hardware and take longest;
 unit tests catch logic bugs faster and cheaper.
 **Decision:** 70% unit (no hardware, fast), 20% integration (cpuctl driver
@@ -86,6 +94,10 @@ only), 10% E2E (full hardware + NMI). Ratios defined in docs/TODO.md.
 
 ## [DECISION] kyua for test runner, JUnit XML output
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Standard FreeBSD ATF toolchain; JUnit XML is parseable by GitHub
 Actions report-results action.
 **Decision:** `kyua test -k Kyuafile` → `kyua report-junit` → `ibs-results.xml`.
@@ -94,6 +106,10 @@ HTML report also generated for artifact upload.
 
 ## [DECISION] ibs_nmi_stress_test lives in IBS suite, not STRESS suite
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** NMI stress (high-rate IBS + system load) is fundamentally an IBS hardware-correctness test. Putting it in the standalone STRESS suite would require `ibs_utils.h` in a non-IBS package or duplicating MSR helpers.
 **Decision:** `ibs_nmi_stress_test.c` is in `tests/sys/amd/ibs/`, classified as TC-INT (Interrupt Delivery, HIGH severity). Inline stress workers are defined locally — no dependency on `tests/sys/amd/stress/`.
 **Discarded alternatives:** STRESS suite (wrong abstraction; stress tests should not require IBS hardware).
@@ -264,6 +280,10 @@ ibs_mem_stress_cache_thrash (~120s test). 14 programs after that not captured.
 
 ## [DECISION] Two-phase execution model for run.sh
 **Date:** 2026-05-16
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-16_0000
 **Context:** All suites (IBS, UMCDF, PMC, STRESS) were running with parallelism=1 for any stress-related run, causing tests to take much longer than needed.
 **Decision:** Introduced a two-phase execution model in run.sh: Phase 1 runs all non-stress tests at full parallelism (PARALLELISM=192 on EPYC 9654); Phase 2 runs stress tests in 4 sequential resource-based batches (CPU → Memory → Disk → Network), each batch running its tests in parallel. Two new TC categories added: TC-NMISTR (ibs_nmi_stress_test, formerly TC-INT) and TC-MEMIBS (ibs_mem_stress_test, formerly TC-STR) for clean batch separation.
 **Discarded alternatives:** Single parallel run of all tests including stress (resource contention). Fully sequential execution (too slow). Per-test parallelism=1 preservation (now unnecessary).

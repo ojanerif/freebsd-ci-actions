@@ -44,6 +44,10 @@ After reboot, `ibs_autotest` rc.d:
 
 ## [DECISION] Cron-safe --auto: no confirmations, already-tested guard
 **Date:** 2026-05-11
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-11_0000
 **Context:** `--auto` was previously interactive — it called `confirm_cmd()` for
 kernel build, install, compile, and reboot. This made it unusable from cron.
 There was also no protection against repeated builds when the source hadn't

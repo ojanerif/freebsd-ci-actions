@@ -45,6 +45,10 @@ Three distinct integration points:
 
 ## [DECISION] upload-artifact@v4 with 30-day retention on all uploads
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** v3 was deprecated; v4 is required. Retention set uniformly to
 match one sprint debugging window.
 **Decision:** Pin to `actions/upload-artifact@v4`, `retention-days: 30` on
@@ -53,6 +57,10 @@ all 6 artifact upload calls.
 
 ## [DECISION] GITHUB_STEP_SUMMARY for Markdown test report
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Results need to be visible without downloading artifacts.
 **Decision:** `generate-report.sh` parses JUnit XML and appends a Markdown
 table to `$GITHUB_STEP_SUMMARY`. Visible on the workflow run page immediately.

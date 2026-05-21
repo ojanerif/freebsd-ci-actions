@@ -38,6 +38,10 @@ is planned but blocked on kernel hwpmc uncore support landing in FreeBSD HEAD.
 
 ## [DECISION] Separate pmc/ from ibs/ directory
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** PMC (generic performance counters via hwpmc) and IBS (AMD-specific
 sampling via MSRs) are different kernel subsystems with different test patterns.
 **Decision:** Keep as separate test directories. PMC tests live in `tests/sys/amd/pmc/`,
@@ -71,6 +75,10 @@ a new composite action or an extended Kyuafile in ci-actions-workflows.
 
 ## [DECISION] Place hwpmc_exterr_test in tests/sys/amd/pmc/
 **Date:** 2026-05-12
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-12_0000
 **Context:** freebsd/freebsd-src#2180 adds hwpmc_exterr_test to tests/sys/kern/ upstream. Our project needed to integrate it into our AMD-focused test suite.
 **Decision:** Added to tests/sys/amd/pmc/ (rather than creating a mirrored tests/sys/kern/ directory) because this project is AMD-specific and the test's AMD/IBS cases are the primary interest. Makefile updated to use port ATF paths and TEST_METADATA for required_user=root, matching the ibs/ pattern.
 **Discarded alternatives:** tests/sys/kern/ mirror of upstream — unnecessary hierarchy for a single test in an AMD-only project.

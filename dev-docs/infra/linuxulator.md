@@ -49,6 +49,10 @@ mount -t tmpfs     tmpfs     /compat/linux/dev/shm
 
 ## [DECISION] Rocky Linux 9 (rl9) over CentOS 7
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** .NET runtime needs GLIBCXX 3.4.20+. Default `linux_base-c7`
 (CentOS 7) ships only 3.4.19; runner binary crashes on startup.
 **Decision:** `pkg install linux_base-rl9 linux-rl9-icu`. Rocky Linux 9 meets

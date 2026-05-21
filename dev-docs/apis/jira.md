@@ -49,6 +49,10 @@ SWLSVROS-6363 #in-progress
 
 ## [DECISION] Secrets-gated Jira integration (optional, not required)
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Not all caller repos will have Jira. Integration must not block
 workflows in repos without Jira secrets configured.
 **Decision:** All three Jira steps use `if: ${{ secrets.JIRA_API_TOKEN != '' }}`.

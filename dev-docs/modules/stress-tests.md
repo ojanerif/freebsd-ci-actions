@@ -40,6 +40,10 @@ This enables validation of AMD PMU correctness under realistic system conditions
 
 ### [DECISION] Two-mode stressor architecture (ATF + plain binaries)
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** We need (a) standalone correctness validation (does the stress workload itself behave correctly?) and (b) background load generation (run stressors in parallel with IBS/PMC tests to detect race conditions).
 **Decision:** Build both ATF test programs (for standalone `--suite STRESS` runs) and plain stressor binaries (for `--stress` background mode) from the same source directory. `stress_utils.h` is shared. The Makefile uses a `beforeinstall` hook to build and install stressor binaries alongside the ATF programs.
 **Discarded alternatives:** Putting stressor binaries in a separate directory (adds maintenance overhead); using ATF programs as background stressors (ATF has a timeout/result model incompatible with "run indefinitely until SIGTERM").
@@ -47,12 +51,20 @@ This enables validation of AMD PMU correctness under realistic system conditions
 
 ### [DECISION] NET_STRESS_THREADS=2 in background mode
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** Heavy network load combined with high IBS sampling rates can reproduce the NMI storm → network stack panic described in FreeBSD-Tests-026 (Ali's crash analysis, 2026-05-14).
 **Decision:** `run.sh` exports `NET_STRESS_THREADS=2` (down from 4 standalone) when using `--stress` as background, and emits a WARNING when the combined suite is IBS or ALL.
 **Impact:** run-sh, ibs-test-suite
 
 ### [DECISION] STRESS_DURATION_SEC=120 for all ATF cases
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** Need long enough to catch intermittent failures (TLB eviction, NMI storms, disk fsync errors) while keeping the full suite under 10 minutes.
 **Decision:** 120s per case; ATF timeout=200 to give 80s of margin.
 **Impact:** All four ATF test programs
@@ -81,6 +93,10 @@ atf_test_program{name="net_stress_test", }
 
 ### [DECISION] IBS Op sampling verification under each stress class
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** The four plain stress tests validate each subsystem in isolation. We need to confirm that IBS Op hardware sampling still produces coherent results (MSR reads succeed, IbsOpEn stays set, no invalid RIPs) while each class of load is active. This detects hardware/driver bugs that only manifest under combined load.
 **Decision:** Added `ibs_op_stress_test.c` (TC-ISTR-01–04). Each test case starts stress threads for one resource class and simultaneously runs `ibs_op_run_sampling()` (120 s at `SIBS_SAFE_PERIOD=0x1000`) on CPU 0. Sampling uses `stress_ibs.h` (no libpmc — direct cpuctl MSR access) to keep the test self-contained. At shutdown, the AMD Erratum #420 drain sequence is verified by confirming `MSR_IBS_OP_CTL` reads 0 after the 50×1µs drain loop. The test is skipped on CPUs without IBS Op support (CPUID 0x8000001B EAX[2]).
 **Discarded alternatives:** Reusing the existing `ibs_nmi_stress_test.c` (that test targets NMI rate-limiting, not MSR coherence); using libpmc (heavier dependency, harder to skip gracefully on non-AMD systems).
@@ -88,12 +104,20 @@ atf_test_program{name="net_stress_test", }
 
 ### [DECISION] stress_ibs.h — self-contained minimal IBS Op interface
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** `ibs_op_stress_test.c` needs IBS Op MSR access. Importing the full IBS test suite's `ibs_utils.h` / `ibs_decode.h` would create a cross-directory dependency and require libpmc for a test that intentionally avoids it.
 **Decision:** Created `tests/sys/amd/stress/stress_ibs.h` — a standalone header with only the symbols needed by the stress test: MSR addresses, bit masks, `SIBS_SAFE_PERIOD`, `sibs_read_msr()`, `sibs_write_msr()`, `sibs_cpu_supports_ibs_op()`, `sibs_op_disable()`. Uses `/dev/cpuctl{N}` ioctls directly.
 **Impact:** stress dir only; no other module dependency.
 
 ### [DECISION] STRESS suite must run with kyua parallelism=1
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** All four ATF test programs (cpu/mem/net/disk) saturate the entire CPU set and main memory for 120 s each. Running them concurrently (kyua default: parallelism=hw.ncpu) causes resource starvation across tests: CPU load from cpu_stress_test prevents net_stress_test's echo server from keeping up with clients; memory pressure from mem_stress_test causes connection-rate tests to miss the 200 s timeout. Three of the twelve net tests broke in every parallel run.
 **Decision:** `run.sh::run_all_tests()` forces `PARALLELISM=1` before the kyua invocation whenever `SUITE=STRESS`. The global `--parallelism` flag is intentionally overridden for this suite and documented in the header output.
 **Discarded alternatives:** Raising ATF timeouts (masks the real problem; test results still non-deterministic); reducing STRESS_DURATION_SEC (defeats the purpose of long-duration validation).
@@ -101,6 +125,10 @@ atf_test_program{name="net_stress_test", }
 
 ### [DECISION] Add stress_monitor_loop console output for STRESS suite
 **Date:** 2026-05-14
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-14_0000
 **Context:** With parallelism=1 and 12 × 120 s tests the suite runs ~24 min with no visible progress besides per-test result lines. Operators need to see which test is running, elapsed/remaining time, and system resource levels.
 **Decision:** Added `stress_monitor_loop()` shell function in `run.sh`. It runs as a background process while kyua executes, printing a two-line resource snapshot every 10 s to `/dev/tty` (bypasses the kyua stdout pipe). Shows: elapsed/estimated-remaining seconds, N/M done, last completed test, CPU load avg, free/total memory, /tmp disk space, lo0 cumulative rx/tx bytes. ETA is computed as `elapsed/done × (total−done)`.
 **Impact:** `run.sh` (new function, run_all_tests setup/teardown, result-processing while loop).
@@ -135,6 +163,10 @@ atf_test_program{name="net_stress_test", }
 
 ## [DECISION] Add ibs_fetch_stress_test (TC-FSTR) to STRESS suite
 **Date:** 2026-05-15
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-05-15_0000
 **Context:** STRESS suite only had ibs_op_stress_test covering IBS Op. IBS Fetch sampling was untested under load.
 **Decision:** Created `ibs_fetch_stress_test.c` with 4 cases (TC-FSTR-01–04): IBS Fetch + cpu/mem/disk/net stressor. Extended `stress_ibs.h` with Fetch MSR constants (`SIBS_MSR_FETCH_CTL`, `SIBS_FETCH_EN`, `SIBS_FETCH_VAL`, `SIBS_FETCH_SAFE_PERIOD=0x1000`), `sibs_cpu_supports_ibs_fetch()` (CPUID 0x8000001B EAX[0]), and `sibs_fetch_disable()` (10-µs drain, no erratum-#420 equivalent for Fetch). Added `TC-FSTR:IBS-Fetch Stress:MEDIUM` to run.sh category map.
 **Discarded alternatives:** Sharing stressor threads between Op and Fetch via a shared header — rejected to keep each test file self-contained.

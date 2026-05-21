@@ -46,6 +46,10 @@ Concurrency: single job at a time (self-hosted default).
 
 ## [DECISION] Bare-metal EPYC, not VM or container
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** IBS requires writing to AMD MSRs via `/dev/cpuctl` and loading
 `hwpmc.ko`. VMs restrict MSR access; containers share the host kernel.
 **Decision:** Bare-metal AMD EPYC Zen 4 host. Runner user has sudo for
@@ -56,6 +60,10 @@ GitHub-hosted Linux (no FreeBSD kernel or AMD hardware).
 
 ## [DECISION] Single concurrent job (--max-parallel-jobs 1)
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** MSR writes are per-CPU global state; concurrent jobs would race
 on MSR values and corrupt each other's test results.
 **Decision:** `--max-parallel-jobs 1` during `config.sh` registration.
@@ -63,6 +71,10 @@ on MSR values and corrupt each other's test results.
 
 ## [DECISION] rc.d service for runner auto-start
 **Date:** 2026-04-30
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** ai-prompt
+**Session:** sess_2026-04-30_0000
 **Context:** Runner must survive host reboots without manual intervention.
 **Decision:** Custom `/usr/local/etc/rc.d/gh_runner` RC script.
 Logs to `/var/log/gh-runner.log`. Uses `daemon(8)` for daemonization.
