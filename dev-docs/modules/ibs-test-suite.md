@@ -243,6 +243,51 @@ ibs_mem_stress_cache_thrash (~120s test). 14 programs after that not captured.
 1 failure (ibs_hwpmc_getmsr_virtual_negative) likely fixed by 3981aa2.
 **Status:** pending
 
+## [TODO] [#6590] Expand ibs_ioctl_test.c — 64 period combos via hwpmc ioctl API
+**Created:** 2026-05-25
+**Status:** blocked
+**Priority:** high
+**Author:** Osvaldo J. Filho
+**Actor type:** human
+**Source:** dashboard
+**Session:** sess_2026-05-25_0000
+**Owner:** ojanerif
+**Due:** when PMC_OP_IBSGETCAPS / PMC_OP_IBSSETPERIOD land in FreeBSD HEAD
+
+**Task:** Expand `ibs_ioctl_test.c` from a 38-line skip-all placeholder to
+8 ATF cases exercising `PMC_OP_IBSGETCAPS` (op 350) and `PMC_OP_IBSSETPERIOD`
+(op 351) for 64 (Fetch MaxCnt × Op MaxCnt) period combinations.
+
+MaxCnt grid (8 values each): 0x0001 0x0010 0x0040 0x0100 0x0400 0x1000
+0x8000 0xFFFF — all 64 (i, j) pairs tested.
+
+All 8 cases include an ENOSYS gate: if the kernel ops are absent the case
+calls `atf_tc_skip("PMC_OP_IBSGETCAPS not yet in kernel")` gracefully.
+
+**Cases:**
+1. `ibs_ioctl_getcaps_valid` — IBSGETCAPS round-trip + CPUID cross-check
+2. `ibs_ioctl_getcaps_zen4_ext` — Zen 4 extension caps (skip if not Zen 4)
+3. `ibs_ioctl_setperiod_fetch_single` — single Fetch period via ioctl
+4. `ibs_ioctl_setperiod_op_single` — single Op period via ioctl
+5. `ibs_ioctl_setperiod_fetch_64_combos` — all 64 (Fetch, Op) pairs
+6. `ibs_ioctl_setperiod_min_max` — min(0x0001) and max(0xFFFF) + zero=EINVAL
+7. `ibs_ioctl_setperiod_invalid_pmcid` — EINVAL on bad pmcid
+8. `ibs_ioctl_setperiod_zen4_ext_maxcnt` — Zen 4 extended MaxCnt bits[26:20]
+
+**Unblock checklist:**
+- [ ] `grep 'IBSGETCAPS\|IBSSETPERIOD' /usr/src/sys/sys/pmc.h` returns results
+- [ ] `hwpmc_mod.c` handles the new ioctl ops
+- [ ] Op numbers confirmed (may differ from 350/351 — update ibs_utils.h)
+- [ ] Manual smoke test: alloc IBS-FETCH + IBSSETPERIOD round-trip verified
+
+**Files affected:**
+- `tests/sys/amd/ibs/ibs_ioctl_test.c` (full rewrite — current is placeholder)
+
+**Acceptance criteria:**
+- 64/64 period combos pass on AMD EPYC Zen 4+ CI runner
+- ENOSYS gate: all 8 cases skip cleanly on unpatched kernel
+- Zen 4 extended MaxCnt case verifies IBSOPCTL bits[26:20]
+
 ## Learning Log
 
 2026-04-30 | First read. 2 decisions, 4 bugs (2 resolved, 2 workaround/resolved), 4 TODOs, 3 snippets. DataSrc shift bug and IBSOPDATA4 GP are the most surprising. | ibs-test-suite
