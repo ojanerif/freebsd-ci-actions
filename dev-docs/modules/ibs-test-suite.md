@@ -288,12 +288,28 @@ calls `atf_tc_skip("PMC_OP_IBSGETCAPS not yet in kernel")` gracefully.
 - ENOSYS gate: all 8 cases skip cleanly on unpatched kernel
 - Zen 4 extended MaxCnt case verifies IBSOPCTL bits[26:20]
 
+## [DECISION] Add ibs_unit_caps_test — capability semantics and per-Zen-generation guarantees
+**Date:** 2026-05-27
+**Status:** ACTIVE
+**Author:** Osvaldo J. Filho
+**Actor type:** ai-agent
+**Source:** ai-prompt
+**Session:** sess_2026-05-27_1643
+**Reviewed by:** usr_osvaldo
+**Related commit:** pending
+
+**Context:** `ibs_unit_feature_flags_test.c` verifies the 7 CPUID 0x8000001B EAX bit positions and three `ibs_feat_*()` accessors, but does not test what each bit *implies* (which MSR fields it gates) nor which bits are guaranteed present per Zen generation.
+**Decision:** Added `tests/sys/amd/ibs/ibs_unit_caps_test.c` (14 TC-UNIT-CAPS cases, no hardware). Part A (9 cases): capability semantics — each bit mapped to the MSR field or address it controls; Part B (5 cases): per-generation guarantees for Zen 1–5 over synthetic CPUID 1 EAX values. All 14 cases passed 14/14 on first run.
+**Rejected alternatives:** Folding into ibs_unit_feature_flags_test (would conflate bit-position tests with semantic/generational tests; harder to extend per generation).
+**Consequences:** Makefile, Kyuafile, ibs-test-suite.md updated. Suite is now 36 programs.
+
 ## Learning Log
 
 2026-04-30 | First read. 2 decisions, 4 bugs (2 resolved, 2 workaround/resolved), 4 TODOs, 3 snippets. DataSrc shift bug and IBSOPDATA4 GP are the most surprising. | ibs-test-suite
 2026-04-30 | Added ibs_mem_stress_test (TC-MEM-01/02) and ibs_cpu_stress_test (TC-CPU-01/02) — each 120 s duration. Fixed out-of-tree ATF link (LDADD_atf_c + -I/usr/local/include in Makefile). Fixed missing <sys/types.h>/<sys/param.h> ordering in 4 files (ibs_access_control_test, ibs_cpuctl_access_test, ibs_invalid_input_test, ibs_robustness_test). Suite now 25 programs, all linking cleanly. | ibs-test-suite
 2026-05-07 | Run at commit 07e8153 (2026-05-06) on AMD EPYC 9654 Zen 4. Confirmed: 54 passed, 6 skipped, 1 failed (ibs_hwpmc_getmsr_virtual_negative — wrong errno expectation, ENOTSUP vs EINVAL). Report truncated; 14 programs not captured. Suite now 30 programs (added hwpmc alloc/caps/info/runtime tests). UMCDF suite added as separate module. All skips expected for this hardware. | ibs-test-suite
 2026-05-08 | Added 4 new hardware-free unit test programs (ibs_unit_ldlat_test, ibs_unit_fetch_ctl_fields_test, ibs_unit_op_data_fields_test, ibs_unit_msr_range_test) covering LDLAT field encoding, Fetch CTL multi-bit fields, Op Data 1-3 fields, and MSR address arithmetic. Suite now 34 programs (30 C + 1 shell + 4 new unit). Unit test tier raised from 38% to 70.3% of all test cases. | ibs-test-suite
+2026-05-27 | Added ibs_unit_caps_test.c (14 TC-UNIT-CAPS cases): Part A maps each CPUID cap bit to its MSR field/address implication; Part B asserts per-Zen-generation guaranteed bits (Zen 1–5) over synthetic EAX values. 14/14 passed, no hardware needed. Suite is now 36 programs. | ibs-test-suite | agent_claude
 
 ## [BUG] ibs_swfilt_test: cpucontrol absent from kyua PATH — converted to C
 **Found:** 2026-05-12
