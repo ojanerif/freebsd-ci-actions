@@ -2,14 +2,15 @@
 module: pmc-tests
 type: module
 status: active
-stack: sh, C, ATF, kyua
-last_modified: 2026-05-22  # updated: 2h collection results + bug pmc-003
-related: [[[ibs-test-suite]], [[ci-actions-workflows]]]
+stack: sh, C, DTrace, ATF, kyua, libpmc
+last_modified: 2026-05-28
+related: [[[ibs-test-suite]], [[ci-actions-workflows]], [[pmc-grouping-validation]]]
 tags: [freebsd-ci-actions, module, pmc, hwpmc]
 ---
 
 # PMC Tests
-> FreeBSD hwpmc/PMC test suite — hwpmc_exterr_test (14 C ATF cases, root-only) plus a shell smoke test; planned expansion to Uncore PMC (L3, DF, UMC, C2C).
+> FreeBSD hwpmc/PMC test suite covering EXTERROR paths, pmcstat smoke tests,
+> grouping/skew characterization, and AMD core PMC allocation/start behavior.
 
 ## Overview
 
@@ -17,16 +18,23 @@ Lives in `tests/sys/amd/pmc/`. Contains:
 - `hwpmc_exterr_test` — 14 root-only C ATF test cases verifying EXTERROR
   diagnostics for generic hwpmc, AMD core, and IBS PMCs (ported from
   freebsd/freebsd-src#2180).
+- `hwpmc_grouping_test` — libpmc-backed row-disposition, allocation rollback,
+  and AMD core start-path characterization.  See [[pmc-grouping-validation]].
+- `pmcstat_grouping_test.sh` — process-scope pmcstat grouping/skew smoke tests.
+- `pmcstat_group_alloc_atomicity_test.sh` — serialized runtime race for
+  concurrent full-width process-scope AMD core allocations.
+- `pmcstat_ibs_errata_test.sh` — offline pmcstat IBS log decode regression.
 - `pmcstat_tsc_test.sh` — TSC-based PMC shell smoke test.
-
-Expansion to Uncore PMC (L3 cache, Data Fabric, UMC memory controller, C2C)
-is planned but blocked on kernel hwpmc uncore support landing in FreeBSD HEAD.
 
 ## Main Files
 
 - `tests/sys/amd/pmc/Makefile` — Build config; uses port ATF paths
 - `tests/sys/amd/pmc/Kyuafile` — kyua test definitions
 - `tests/sys/amd/pmc/hwpmc_exterr_test.c` — EXTERROR negative-path ATF test (14 cases)
+- `tests/sys/amd/pmc/hwpmc_grouping_test.c` — AMD core grouping and start-path ATF tests
+- `tests/sys/amd/pmc/pmcinfo_snapshot.c` / `.h` — libpmc row snapshot helper
+- `tests/sys/amd/pmc/msr_snapshot.c` / `.h` — cpuctl(4) AMD core PMC MSR snapshot helper
+- `tests/sys/amd/pmc/pmcinfo_thread_count.c` — helper binary for shell ATF row-count checks
 - `tests/sys/amd/pmc/pmcstat_tsc_test.sh` — TSC-based PMC smoke test
 
 ## Dependencies
