@@ -119,10 +119,11 @@ snapshot tests instead of `pmccontrol -s`, which only prints per-CPU PMC state
 and does not expose per-PID ownership.
 
 Runtime precondition: do not run unrelated `pmcstat(8)`/`hwpmc(4)` consumers on
-the machine while this shell race is executing.  Kyua `is_exclusive=true` plus
-`parallelism=1` prevents in-suite PMC contamination, but an external process
-holding AMD core THREAD rows can legitimately move the baseline and make the
-residue assertion fail.
+the machine while this shell race is executing.  Kyua `parallelism=1` prevents
+in-suite PMC contamination, but an external process holding AMD core THREAD rows
+can legitimately move the baseline and make the residue assertion fail.  Do not
+use ATF `is_exclusive` metadata here; the Kyua/ATF version on supported FreeBSD
+test hosts rejects that property during `__test_cases_list__` enumeration.
 
 ## DTrace tooling
 
