@@ -121,6 +121,10 @@ Before ending any task:
 5. If a pattern now appears in 3 or more modules, append it to
    `dev-docs/_global.md` under the appropriate section.
 6. Append audit events to `dev-docs/team/audit-log.jsonl` for every change made.
+7. **Save or update the daily log.** If the session produced any concrete result
+   (commits, Jira updates, decisions, analyses), create or append to
+   `dev-docs/daily/YYYY-MM-DD.md` (today's date). Use the format defined in
+   `dev-docs/modules/daily-log.md`. Log event with `action: "daily.save"`.
 
 ---
 
