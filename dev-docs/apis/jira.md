@@ -106,6 +106,72 @@ Secrets need to be added to repo settings.
     transition: Done
 ```
 
+## AMD Jira REST API — Field Reference (learned 2026-06-11)
+
+All direct Jira REST API work uses `/rest/api/3/search/jql` (POST) and `/rest/api/3/issue/<KEY>` (GET/PUT).
+
+### Critical: shell quoting with curl
+
+Always write JSON to a temp file and use `curl -d @file`. Shell interpolation
+inside `-d '...'` breaks with complex JQL. Pattern:
+
+```python
+import tempfile, json, subprocess, os
+with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    json.dump(payload, f); tmp = f.name
+res = subprocess.run(['curl','-s','-u','USER:TOKEN','-H','Accept: application/json',
+    '-H','Content-Type: application/json','-X','POST','URL','-d','@'+tmp],
+    capture_output=True, text=True)
+os.unlink(tmp)
+```
+
+### Pagination
+
+`/rest/api/3/search/jql` uses **cursor-based pagination** (`nextPageToken`), not offset.
+Loop until `nextPageToken` is absent or batch is empty.
+
+### Custom field IDs
+
+| Field | ID | Format |
+|-------|----|--------|
+| Start date | `customfield_10022` | `YYYY-MM-DD` |
+| End date | `customfield_10023` | `YYYY-MM-DD` |
+| Target Start | `customfield_10257` | datetime — send `T12:00:00.000+0000` |
+| Resolve By Target | `customfield_10217` | datetime — send `T12:00:00.000+0000` |
+| Implemented Date | `customfield_10183` | datetime — send `T12:00:00.000+0000` |
+| Analyzed Date | `customfield_10220` | datetime — send `T12:00:00.000+0000` |
+| Issue Resolution (exec) | `customfield_10171` | option `{id}` — Done=`30835`, Fixed=`30834`-ish |
+| Epic Link | `customfield_10014` | issue key string |
+
+**Datetime timezone gotcha:** Always use `T12:00:00.000+0000` for datetime fields.
+`T00:00:00.000+0000` shifts the stored date back by 1 day (server is UTC-5).
+
+### AMD priorities
+
+`P1 (Gating)`, `P2 (Must Solve)`, `P3 (Solution Desired)`, `P4 (No Impact/Notify)`, `Undefined`.
+Use `{"priority": {"name": "P3 (Solution Desired)"}"` — not `"Minor"` (invalid).
+
+### Exec status (`customfield_10171`)
+
+Closure-only field. No "In Progress" option exists. Valid values: `Done`, `Fixed`,
+`Completed`, `Cancelled`, `Duplicate`, `Cannot Reproduce`. Set `{"id": "30835"}` for Done.
+
+### Transition: Move to Implemented
+
+Transition id=71 on SWLSVROS tickets. Requires **Schedule Issues** Jira permission.
+If blocked with 400/permission error → use Jira UI or ask project admin.
+
+### Compliance checklist (SWLSVROS tickets)
+
+- start date = target start date
+- end date = target end date (resolve by target)
+- Priority ≠ Undefined
+- Analyzed Date set on Analyzed/Implemented/Closed
+- Implemented Date set on Implemented/Closed
+- Exec Resolution set on Closed tickets
+- Weekly comment on every open ticket
+
 ## Learning Log
 
 2026-04-30 | First read. Integration is implemented but secrets not yet set. One open bug (transition granularity). Low risk — fully no-op without secrets. | jira
+2026-06-11 | Full AMD Jira REST API field reference added. Learned: datetime tz offset bug (use T12:00), AMD priority names, exec status options, pagination pattern, transition permission requirements, compliance rules for SWLSVROS tickets. | ojanerif

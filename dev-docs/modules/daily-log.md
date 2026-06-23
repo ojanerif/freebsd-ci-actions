@@ -66,4 +66,7 @@ Ao final de cada sessão de trabalho que produziu algum resultado concreto
 ```
 2026-06-02 | Módulo daily-log criado. Primeiro daily registrado para 2026-06-02.
              Sprint adiantado: 6597 e 6595 entregues na segunda. | daily-log | usr_osvaldo
+2026-06-22 | tsc_all_cpu_sync_tight bug fix (atomic barrier, 192-CPU NUMA). tsc_deadline_test
+             integrado no CI. Melhorias: email enrichment, kver HTML, compile ALL loop.
+             Run completo APPROVED 453 testes. Comment em SWLSVROS-6600. | agent_claude
 ```
