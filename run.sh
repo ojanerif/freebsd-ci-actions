@@ -935,7 +935,49 @@ send_report_email() {
     log_success "Email sent to: ${_to}"
 }
 
-# ── Kernel build ───────────────────────────────────────────────────────────
+# ── World + Kernel build ───────────────────────────────────────────────────
+
+# Build userland from $SRC_DIR (make buildworld)
+build_world_from_src() {
+    _ncpu=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    log_info "Building world in ${SRC_DIR} (${_ncpu} jobs)"
+
+    if [ $DRY_RUN -eq 1 ]; then
+        log_info "Would run: make -j${_ncpu} buildworld (dry run)"
+        return 0
+    fi
+
+    if [ ! -d "$SRC_DIR" ]; then
+        log_error "Source directory not found: $SRC_DIR"
+        log_error "Run --download first to clone the FreeBSD source."
+        exit 1
+    fi
+
+    if make -C "$SRC_DIR" -j"$_ncpu" buildworld; then
+        log_success "World build complete"
+    else
+        log_error "World build failed"
+        exit 1
+    fi
+}
+
+# Install userland from the buildworld output (make installworld)
+# Keeps kernel and world in sync so PMC_VERSION_MINOR always matches.
+install_world_to_base() {
+    log_info "Installing world to / ..."
+
+    if [ $DRY_RUN -eq 1 ]; then
+        log_info "Would run: make installworld (dry run)"
+        return 0
+    fi
+
+    if make -C "$SRC_DIR" installworld; then
+        log_success "World installed"
+    else
+        log_error "World install failed"
+        exit 1
+    fi
+}
 
 # Build the kernel from $SRC_DIR using KERNCONF
 build_kernel_from_src() {
@@ -1351,7 +1393,7 @@ auto_mode() {
     fi
 
     log_info "New commit detected: ${_current_commit}"
-    log_info "Auto mode: fetch → reset → build kernel → install → write sentinel → reboot"
+    log_info "Auto mode: fetch → reset → buildworld → installworld → buildkernel → installkernel → write sentinel → reboot"
     log_info "Suite: ${SUITE}  Kernel: ${AUTO_KERNCONF}  Email: ${_email}"
 
     check_boot_environment
@@ -1367,23 +1409,30 @@ auto_mode() {
         git -C "$SRC_DIR" clean -fd > /dev/null 2>&1 || true
     fi
 
-    # Step 2: Build kernel
+    # Step 2: Build world (keeps libpmc, pmcstat, headers in sync with the kernel source)
+    build_world_from_src
+
+    # Step 3: Install world (must precede installkernel so the new libpmc is on disk
+    # before the new kernel boots and enforces its PMC_VERSION)
+    install_world_to_base
+
+    # Step 4: Build kernel
     build_kernel_from_src
 
-    # Step 3: Install kernel (marks /boot/kernel for next boot)
+    # Step 5: Install kernel (marks /boot/kernel for next boot)
     install_kernel_to_boot
 
-    # Step 4: Compile test suite (so rc.d service doesn't need to)
+    # Step 6: Compile test suite (so rc.d service doesn't need to)
     log_info "Pre-compiling test suite..."
     compile_tests
 
-    # Step 5: Write sentinel
+    # Step 7: Write sentinel
     write_autotest_sentinel "$_email"
 
-    # Step 6: Install + enable rc.d service
+    # Step 8: Install + enable rc.d service
     install_rcd_service
 
-    # Step 7: Reboot
+    # Step 9: Reboot
     echo ""
     echo "================================================================="
     log_info "System is ready for auto-test reboot."
