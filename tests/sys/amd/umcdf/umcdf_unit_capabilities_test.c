@@ -41,7 +41,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_feature_true, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_4, AMD_UMCDF_ID2_PNXC);
 
-	ATF_CHECK(amd_umcdf_has_df_feature(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_df_feature(&cpu) == true,
+	    "has_df_feature must be true for Zen4 with PNXC bit set");
 }
 
 /* TC-UNIT-UCAP-02: has_df_feature returns false when PNXC bit is clear */
@@ -50,14 +51,17 @@ ATF_TC_BODY(umcdf_unit_cap_df_feature_false, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_4, 0U);
 
-	ATF_CHECK(amd_umcdf_has_df_feature(&cpu) == false);
+	ATF_CHECK_MSG(amd_umcdf_has_df_feature(&cpu) == false,
+	    "has_df_feature must be false for Zen4 with PNXC bit clear");
 }
 
 /* TC-UNIT-UCAP-03: AMD_UMCDF_ID2_PNXC is bit 24 of ECX */
 ATF_TC_WITHOUT_HEAD(umcdf_unit_cap_pnxc_bit24);
 ATF_TC_BODY(umcdf_unit_cap_pnxc_bit24, tc)
 {
-	ATF_CHECK_EQ(AMD_UMCDF_ID2_PNXC, (1U << 24));
+	ATF_CHECK_EQ_MSG(AMD_UMCDF_ID2_PNXC, (1U << 24),
+	    "AMD_UMCDF_ID2_PNXC must be bit 24 (%#x), got %#x",
+	    (1U << 24), AMD_UMCDF_ID2_PNXC);
 }
 
 /* TC-UNIT-UCAP-04: adjacent bit 23 does not trigger has_df_feature */
@@ -66,7 +70,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_adjacent_bit_safe, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_4, (1U << 23));
 
-	ATF_CHECK(amd_umcdf_has_df_feature(&cpu) == false);
+	ATF_CHECK_MSG(amd_umcdf_has_df_feature(&cpu) == false,
+	    "has_df_feature must be false for Zen4 with only adjacent bit 23 set");
 }
 
 /* TC-UNIT-UCAP-05: has_freebsd_umc_json returns true for Zen 4 */
@@ -75,7 +80,8 @@ ATF_TC_BODY(umcdf_unit_cap_umc_json_zen4, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_4, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_umc_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_umc_json(&cpu) == true,
+	    "has_freebsd_umc_json must be true for Zen4");
 }
 
 /* TC-UNIT-UCAP-06: has_freebsd_umc_json returns true for Zen 5 */
@@ -84,7 +90,8 @@ ATF_TC_BODY(umcdf_unit_cap_umc_json_zen5, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_5, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_umc_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_umc_json(&cpu) == true,
+	    "has_freebsd_umc_json must be true for Zen5");
 }
 
 /* TC-UNIT-UCAP-07: has_freebsd_umc_json returns true for Zen 6 */
@@ -93,7 +100,8 @@ ATF_TC_BODY(umcdf_unit_cap_umc_json_zen6, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_6, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_umc_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_umc_json(&cpu) == true,
+	    "has_freebsd_umc_json must be true for Zen6");
 }
 
 /* TC-UNIT-UCAP-08: has_freebsd_umc_json returns false for Zen 3 */
@@ -102,7 +110,8 @@ ATF_TC_BODY(umcdf_unit_cap_umc_json_zen3_false, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_3, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_umc_json(&cpu) == false);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_umc_json(&cpu) == false,
+	    "has_freebsd_umc_json must be false for Zen3");
 }
 
 /* TC-UNIT-UCAP-09: has_freebsd_umc_json returns false for Zen 1 */
@@ -111,7 +120,8 @@ ATF_TC_BODY(umcdf_unit_cap_umc_json_zen1_false, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_1, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_umc_json(&cpu) == false);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_umc_json(&cpu) == false,
+	    "has_freebsd_umc_json must be false for Zen1");
 }
 
 /* TC-UNIT-UCAP-10: has_freebsd_df_json returns true for Zen 1 */
@@ -120,7 +130,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zen1, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_1, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == true,
+	    "has_freebsd_df_json must be true for Zen1");
 }
 
 /* TC-UNIT-UCAP-11: has_freebsd_df_json returns true for Zen+ */
@@ -129,7 +140,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zenplus, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_PLUS, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == true,
+	    "has_freebsd_df_json must be true for Zen+");
 }
 
 /* TC-UNIT-UCAP-12: has_freebsd_df_json returns true for Zen 2 */
@@ -138,7 +150,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zen2, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_2, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == true,
+	    "has_freebsd_df_json must be true for Zen2");
 }
 
 /* TC-UNIT-UCAP-13: has_freebsd_df_json returns true for Zen 3 */
@@ -147,7 +160,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zen3, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_3, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == true,
+	    "has_freebsd_df_json must be true for Zen3");
 }
 
 /* TC-UNIT-UCAP-14: has_freebsd_df_json returns true for Zen 3+ */
@@ -156,7 +170,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zen3plus, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_3_PLUS, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == true,
+	    "has_freebsd_df_json must be true for Zen3+");
 }
 
 /* TC-UNIT-UCAP-15: has_freebsd_df_json returns true for Zen 4 */
@@ -165,7 +180,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zen4, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_4, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == true,
+	    "has_freebsd_df_json must be true for Zen4");
 }
 
 /* TC-UNIT-UCAP-16: has_freebsd_df_json returns true for Zen 5 */
@@ -174,7 +190,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zen5, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_5, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == true);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == true,
+	    "has_freebsd_df_json must be true for Zen5");
 }
 
 /* TC-UNIT-UCAP-17: has_freebsd_df_json returns false for Zen 6 */
@@ -183,7 +200,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_zen6_false, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_6, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == false);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == false,
+	    "has_freebsd_df_json must be false for Zen6");
 }
 
 /* TC-UNIT-UCAP-18: has_freebsd_df_json returns false for PRE_ZEN */
@@ -192,7 +210,8 @@ ATF_TC_BODY(umcdf_unit_cap_df_json_prezen_false, tc)
 {
 	struct amd_umcdf_cpu cpu = make_cpu(AMD_UMCDF_ZEN_PRE_ZEN, 0U);
 
-	ATF_CHECK(amd_umcdf_has_freebsd_df_json(&cpu) == false);
+	ATF_CHECK_MSG(amd_umcdf_has_freebsd_df_json(&cpu) == false,
+	    "has_freebsd_df_json must be false for PRE_ZEN");
 }
 
 /* TC-UNIT-UCAP-19: expected_df_config uses DF1 for Zen 3 */
@@ -207,7 +226,9 @@ ATF_TC_BODY(umcdf_unit_cap_df_config_zen3_is_df1, tc)
 	uint64_t want = AMD_UMCDF_DF1_TO_EVENTMASK(0x07U) |
 	    AMD_UMCDF_DF1_TO_UNITMASK(0x38U);
 
-	ATF_CHECK_EQ(got, want);
+	ATF_CHECK_EQ_MSG(got, want,
+	    "df_config = %#llx, expected %#llx",
+	    (unsigned long long)(got), (unsigned long long)(want));
 }
 
 /* TC-UNIT-UCAP-20: expected_df_config uses DF2 for Zen 4 */
@@ -222,7 +243,9 @@ ATF_TC_BODY(umcdf_unit_cap_df_config_zen4_is_df2, tc)
 	uint64_t want = AMD_UMCDF_DF2_TO_EVENTMASK(0x07U) |
 	    AMD_UMCDF_DF2_TO_UNITMASK(0x38U);
 
-	ATF_CHECK_EQ(got, want);
+	ATF_CHECK_EQ_MSG(got, want,
+	    "df_config = %#llx, expected %#llx",
+	    (unsigned long long)(got), (unsigned long long)(want));
 }
 
 /* TC-UNIT-UCAP-21: expected_df_config uses DF2 for Zen 5 */
@@ -237,7 +260,9 @@ ATF_TC_BODY(umcdf_unit_cap_df_config_zen5_is_df2, tc)
 	uint64_t want = AMD_UMCDF_DF2_TO_EVENTMASK(0x55U) |
 	    AMD_UMCDF_DF2_TO_UNITMASK(0xAAU);
 
-	ATF_CHECK_EQ(got, want);
+	ATF_CHECK_EQ_MSG(got, want,
+	    "df_config = %#llx, expected %#llx",
+	    (unsigned long long)(got), (unsigned long long)(want));
 }
 
 /* TC-UNIT-UCAP-22: DF1 and DF2 configs differ for event with high bits set */

@@ -205,8 +205,9 @@ ATF_TC_BODY(ibs_nmi_high_rate_stability, tc)
 	mworkers = calloc((size_t)ncpus, sizeof(struct nmi_mem_worker));
 	cthreads = calloc((size_t)ncpus, sizeof(pthread_t));
 	mthreads = calloc((size_t)ncpus, sizeof(pthread_t));
-	ATF_REQUIRE(cworkers != NULL && mworkers != NULL &&
-	    cthreads != NULL && mthreads != NULL);
+	ATF_REQUIRE_MSG(cworkers != NULL && mworkers != NULL &&
+	    cthreads != NULL && mthreads != NULL,
+	    "failed to allocate compute/mem worker and thread arrays");
 
 	/* Launch compute + memory stress workers. */
 	for (i = 0; i < ncpus; i++) {
@@ -418,7 +419,8 @@ ATF_TC_BODY(ibs_nmi_drain_under_load, tc)
 
 	workers = calloc((size_t)ncpus, sizeof(struct nmi_stress_worker));
 	threads = calloc((size_t)ncpus, sizeof(pthread_t));
-	ATF_REQUIRE(workers != NULL && threads != NULL);
+	ATF_REQUIRE_MSG(workers != NULL && threads != NULL,
+	    "failed to allocate worker/thread arrays");
 
 	/* Launch compute stress threads. */
 	for (i = 0; i < ncpus; i++) {

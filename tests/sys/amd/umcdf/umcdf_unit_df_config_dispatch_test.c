@@ -65,7 +65,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_prezen_df1, tc)
 	uint64_t want = AMD_UMCDF_DF1_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF1_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-02: Zen 1 uses DF1 encoding */
@@ -77,7 +80,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zen1_df1, tc)
 	uint64_t want = AMD_UMCDF_DF1_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF1_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-03: Zen+ uses DF1 encoding */
@@ -89,7 +95,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zenplus_df1, tc)
 	uint64_t want = AMD_UMCDF_DF1_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF1_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-04: Zen 2 uses DF1 encoding */
@@ -101,7 +110,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zen2_df1, tc)
 	uint64_t want = AMD_UMCDF_DF1_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF1_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-05: Zen 3 uses DF1 encoding */
@@ -113,7 +125,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zen3_df1, tc)
 	uint64_t want = AMD_UMCDF_DF1_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF1_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-06: Zen 3+ uses DF1 encoding */
@@ -125,7 +140,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zen3plus_df1, tc)
 	uint64_t want = AMD_UMCDF_DF1_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF1_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-07: Zen 4 uses DF2 encoding */
@@ -137,7 +155,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zen4_df2, tc)
 	uint64_t want = AMD_UMCDF_DF2_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF2_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-08: Zen 5 uses DF2 encoding */
@@ -149,7 +170,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zen5_df2, tc)
 	uint64_t want = AMD_UMCDF_DF2_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF2_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-09: Zen 6 uses DF2 encoding */
@@ -161,7 +185,10 @@ ATF_TC_BODY(umcdf_unit_dfdis_zen6_df2, tc)
 	uint64_t want = AMD_UMCDF_DF2_TO_EVENTMASK(TEST_EVENT_CODE) |
 	    AMD_UMCDF_DF2_TO_UNITMASK(TEST_UMASK);
 
-	ATF_CHECK_EQ(amd_umcdf_expected_df_config(&cpu, &ev), want);
+	ATF_CHECK_EQ_MSG(amd_umcdf_expected_df_config(&cpu, &ev), want,
+	    "expected_df_config = %#llx, want %#llx",
+	    (unsigned long long)amd_umcdf_expected_df_config(&cpu, &ev),
+	    (unsigned long long)(want));
 }
 
 /* TC-UNIT-DFDIS-10: DF1 and DF2 produce different values for high-bit event */
@@ -209,7 +236,9 @@ ATF_TC_BODY(umcdf_unit_dfdis_df1_low_byte_preserved, tc)
 	struct amd_umcdf_event_candidate ev = make_event(0x42U, 0U);
 	uint64_t cfg = amd_umcdf_expected_df_config(&cpu, &ev);
 
-	ATF_CHECK_EQ((cfg & 0xffULL), 0x42ULL);
+	ATF_CHECK_EQ_MSG((cfg & 0xffULL), 0x42ULL,
+	    "eventmask bits = %#llx, expected %#llx",
+	    (unsigned long long)(cfg & 0xffULL), (unsigned long long)0x42ULL);
 }
 
 /* TC-UNIT-DFDIS-13: event low byte is preserved in DF2 result */
@@ -220,7 +249,9 @@ ATF_TC_BODY(umcdf_unit_dfdis_df2_low_byte_preserved, tc)
 	struct amd_umcdf_event_candidate ev = make_event(0x42U, 0U);
 	uint64_t cfg = amd_umcdf_expected_df_config(&cpu, &ev);
 
-	ATF_CHECK_EQ((cfg & 0xffULL), 0x42ULL);
+	ATF_CHECK_EQ_MSG((cfg & 0xffULL), 0x42ULL,
+	    "eventmask bits = %#llx, expected %#llx",
+	    (unsigned long long)(cfg & 0xffULL), (unsigned long long)0x42ULL);
 }
 
 /* TC-UNIT-DFDIS-14: unit mask low byte lands at bits[15:8] in DF1 */
@@ -231,7 +262,9 @@ ATF_TC_BODY(umcdf_unit_dfdis_df1_unit_position, tc)
 	struct amd_umcdf_event_candidate ev = make_event(0U, 0x3CU);
 	uint64_t cfg = amd_umcdf_expected_df_config(&cpu, &ev);
 
-	ATF_CHECK_EQ(((cfg >> 8) & 0xffULL), 0x3CULL);
+	ATF_CHECK_EQ_MSG(((cfg >> 8) & 0xffULL), 0x3CULL,
+	    "unitmask byte = %#llx, expected %#llx",
+	    (unsigned long long)((cfg >> 8) & 0xffULL), (unsigned long long)0x3CULL);
 }
 
 /* TC-UNIT-DFDIS-15: unit mask low byte lands at bits[15:8] in DF2 */
@@ -242,7 +275,9 @@ ATF_TC_BODY(umcdf_unit_dfdis_df2_unit_position, tc)
 	struct amd_umcdf_event_candidate ev = make_event(0U, 0x3CU);
 	uint64_t cfg = amd_umcdf_expected_df_config(&cpu, &ev);
 
-	ATF_CHECK_EQ(((cfg >> 8) & 0xffULL), 0x3CULL);
+	ATF_CHECK_EQ_MSG(((cfg >> 8) & 0xffULL), 0x3CULL,
+	    "unitmask byte = %#llx, expected %#llx",
+	    (unsigned long long)((cfg >> 8) & 0xffULL), (unsigned long long)0x3CULL);
 }
 
 /* TC-UNIT-DFDIS-16: DF2 high umask nibble lands at bits[27:24] */
@@ -254,7 +289,9 @@ ATF_TC_BODY(umcdf_unit_dfdis_df2_unit_high_nibble, tc)
 	uint64_t cfg = amd_umcdf_expected_df_config(&cpu, &ev);
 
 	/* bit 8 of umask → bit 24 of result */
-	ATF_CHECK_EQ(((cfg >> 24) & 0x1ULL), 0x1ULL);
+	ATF_CHECK_EQ_MSG(((cfg >> 24) & 0x1ULL), 0x1ULL,
+	    "enable/high bit = %#llx, expected %#llx",
+	    (unsigned long long)((cfg >> 24) & 0x1ULL), (unsigned long long)0x1ULL);
 }
 
 /* TC-UNIT-DFDIS-17: DF1 high-extension umask is NOT present in the result */
@@ -267,7 +304,9 @@ ATF_TC_BODY(umcdf_unit_dfdis_df1_no_high_umask, tc)
 
 	/* DF1 only uses bits[7:0] of umask.  0x0100 has no low byte, so
 	 * the entire config should be 0. */
-	ATF_CHECK_EQ(cfg, 0ULL);
+	ATF_CHECK_EQ_MSG(cfg, 0ULL,
+	    "full config = %#llx, expected %#llx",
+	    (unsigned long long)cfg, (unsigned long long)0ULL);
 }
 
 ATF_TP_ADD_TCS(tp)

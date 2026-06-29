@@ -233,8 +233,12 @@ ATF_TC_BODY(ibs_data_src_encodings, tc)
 		/* Read back and verify */
 		error = read_msr(0, MSR_IBS_OP_DATA, &readback);
 		ATF_REQUIRE_ERRNO(0, error == 0);
-		ATF_CHECK_EQ(ibs_get_data_src(readback),
-		    test_cases[i].data_src);
+		ATF_CHECK_EQ_MSG(ibs_get_data_src(readback),
+		    test_cases[i].data_src,
+		    "DataSrc readback (%s): got %#llx, expected %#llx",
+		    test_cases[i].desc,
+		    (unsigned long long)(ibs_get_data_src(readback)),
+		    (unsigned long long)(test_cases[i].data_src));
 	}
 
 	/* Restore original value */
@@ -329,8 +333,12 @@ ATF_TC_BODY(ibs_data_src_extended, tc)
 		/* Read back and verify */
 		error = read_msr(0, MSR_IBS_OP_DATA, &readback);
 		ATF_REQUIRE_ERRNO(0, error == 0);
-		ATF_CHECK_EQ(ibs_get_data_src(readback),
-		    test_cases[i].data_src);
+		ATF_CHECK_EQ_MSG(ibs_get_data_src(readback),
+		    test_cases[i].data_src,
+		    "extended DataSrc readback (%s): got %#llx, expected %#llx",
+		    test_cases[i].desc,
+		    (unsigned long long)(ibs_get_data_src(readback)),
+		    (unsigned long long)(test_cases[i].data_src));
 	}
 
 	/* Restore original value */
@@ -386,8 +394,14 @@ ATF_TC_BODY(ibs_op_data_fields, tc)
 
 	error = read_msr(0, MSR_IBS_OP_DATA, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_comp_to_ret_ctr(readback), 0x5678);
-	ATF_CHECK_EQ(ibs_get_tag_to_ret_ctr(readback), 0x1234);
+	ATF_CHECK_EQ_MSG(ibs_get_comp_to_ret_ctr(readback), 0x5678,
+	    "comp_to_ret_ctr: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_comp_to_ret_ctr(readback)),
+	    (unsigned long long)(0x5678));
+	ATF_CHECK_EQ_MSG(ibs_get_tag_to_ret_ctr(readback), 0x1234,
+	    "tag_to_ret_ctr: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_tag_to_ret_ctr(readback)),
+	    (unsigned long long)(0x1234));
 
 	/*
 	 * Test Op Data 2: DataSrc field extraction.
@@ -398,7 +412,10 @@ ATF_TC_BODY(ibs_op_data_fields, tc)
 
 	error = read_msr(0, MSR_IBS_OP_DATA2, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_data_src(readback), 0x3);
+	ATF_CHECK_EQ_MSG(ibs_get_data_src(readback), 0x3,
+	    "Op Data 2 DataSrc: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_data_src(readback)),
+	    (unsigned long long)(0x3));
 
 	/*
 	 * Test Op Data 3: Various field extractions.
@@ -413,11 +430,24 @@ ATF_TC_BODY(ibs_op_data_fields, tc)
 
 	error = read_msr(0, MSR_IBS_OP_DATA3, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_dc_miss_lat(readback), 0x100);
-	ATF_CHECK_EQ(ibs_get_tlb_refill_lat(readback), 0x200);
-	ATF_CHECK_EQ(ibs_get_op_mem_width(readback), 0x4);
-	ATF_CHECK((readback & IBS_LD_OP) != 0);
-	ATF_CHECK((readback & IBS_ST_OP) == 0);
+	ATF_CHECK_EQ_MSG(ibs_get_dc_miss_lat(readback), 0x100,
+	    "dc_miss_lat: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_dc_miss_lat(readback)),
+	    (unsigned long long)(0x100));
+	ATF_CHECK_EQ_MSG(ibs_get_tlb_refill_lat(readback), 0x200,
+	    "tlb_refill_lat: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_tlb_refill_lat(readback)),
+	    (unsigned long long)(0x200));
+	ATF_CHECK_EQ_MSG(ibs_get_op_mem_width(readback), 0x4,
+	    "op_mem_width: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_op_mem_width(readback)),
+	    (unsigned long long)(0x4));
+	ATF_CHECK_MSG((readback & IBS_LD_OP) != 0,
+	    "IBS_LD_OP bit should be set in readback %#llx",
+	    (unsigned long long)readback);
+	ATF_CHECK_MSG((readback & IBS_ST_OP) == 0,
+	    "IBS_ST_OP bit should be clear in readback %#llx",
+	    (unsigned long long)readback);
 
 	/* Restore original values */
 	error = write_msr(0, MSR_IBS_OP_DATA, orig_data1);
@@ -475,8 +505,13 @@ ATF_TC_BODY(ibs_op_data4_zen4, tc)
 	/* Read back and verify */
 	error = read_msr(0, MSR_AMD64_IBSOPDATA4, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_remote_lat(readback), 0x123);
-	ATF_CHECK((readback & IBS_OP_DATA4_VALID) != 0);
+	ATF_CHECK_EQ_MSG(ibs_get_remote_lat(readback), 0x123,
+	    "remote_lat: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_remote_lat(readback)),
+	    (unsigned long long)(0x123));
+	ATF_CHECK_MSG((readback & IBS_OP_DATA4_VALID) != 0,
+	    "IBS_OP_DATA4_VALID bit should be set in readback %#llx",
+	    (unsigned long long)readback);
 
 	/* Test with zero remote latency */
 	written = IBS_OP_DATA4_VALID;
@@ -485,8 +520,13 @@ ATF_TC_BODY(ibs_op_data4_zen4, tc)
 
 	error = read_msr(0, MSR_AMD64_IBSOPDATA4, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_remote_lat(readback), 0);
-	ATF_CHECK((readback & IBS_OP_DATA4_VALID) != 0);
+	ATF_CHECK_EQ_MSG(ibs_get_remote_lat(readback), 0,
+	    "remote_lat (zero case): got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_remote_lat(readback)),
+	    (unsigned long long)(0));
+	ATF_CHECK_MSG((readback & IBS_OP_DATA4_VALID) != 0,
+	    "IBS_OP_DATA4_VALID bit should be set in readback %#llx",
+	    (unsigned long long)readback);
 
 	/* Restore original value */
 	error = write_msr(0, MSR_AMD64_IBSOPDATA4, original);
@@ -540,7 +580,10 @@ ATF_TC_BODY(ibs_fetch_address_fields, tc)
 
 	error = read_msr(0, MSR_IBS_FETCH_LIN_ADDR, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_fetch_lin_addr(readback), written);
+	ATF_CHECK_EQ_MSG(ibs_get_fetch_lin_addr(readback), written,
+	    "fetch lin addr (user-space): got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_fetch_lin_addr(readback)),
+	    (unsigned long long)(written));
 
 	/* Test with kernel-space address */
 	written = 0xffffffff81000000ULL;
@@ -549,7 +592,10 @@ ATF_TC_BODY(ibs_fetch_address_fields, tc)
 
 	error = read_msr(0, MSR_IBS_FETCH_LIN_ADDR, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_fetch_lin_addr(readback), written);
+	ATF_CHECK_EQ_MSG(ibs_get_fetch_lin_addr(readback), written,
+	    "fetch lin addr (kernel-space): got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_fetch_lin_addr(readback)),
+	    (unsigned long long)(written));
 
 	/*
 	 * Test Fetch physical address.
@@ -561,7 +607,10 @@ ATF_TC_BODY(ibs_fetch_address_fields, tc)
 
 	error = read_msr(0, MSR_IBS_FETCH_PHY_ADDR, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_fetch_phy_addr(readback), written);
+	ATF_CHECK_EQ_MSG(ibs_get_fetch_phy_addr(readback), written,
+	    "fetch phy addr: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_fetch_phy_addr(readback)),
+	    (unsigned long long)(written));
 
 	/* Restore original values */
 	error = write_msr(0, MSR_IBS_FETCH_LIN_ADDR, orig_lin);
@@ -619,7 +668,10 @@ ATF_TC_BODY(ibs_dc_address_fields, tc)
 
 	error = read_msr(0, MSR_IBS_DC_LIN_AD, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_dc_lin_addr(readback), written);
+	ATF_CHECK_EQ_MSG(ibs_get_dc_lin_addr(readback), written,
+	    "dc lin addr (stack-like): got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_dc_lin_addr(readback)),
+	    (unsigned long long)(written));
 
 	/* Test with heap-like address */
 	written = 0x0000555555555000ULL;
@@ -628,7 +680,10 @@ ATF_TC_BODY(ibs_dc_address_fields, tc)
 
 	error = read_msr(0, MSR_IBS_DC_LIN_AD, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_dc_lin_addr(readback), written);
+	ATF_CHECK_EQ_MSG(ibs_get_dc_lin_addr(readback), written,
+	    "dc lin addr (heap-like): got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_dc_lin_addr(readback)),
+	    (unsigned long long)(written));
 
 	/*
 	 * Test DC physical address.
@@ -639,7 +694,10 @@ ATF_TC_BODY(ibs_dc_address_fields, tc)
 
 	error = read_msr(0, MSR_IBS_DC_PHYS_AD, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK_EQ(ibs_get_dc_phy_addr(readback), written);
+	ATF_CHECK_EQ_MSG(ibs_get_dc_phy_addr(readback), written,
+	    "dc phy addr: got %#llx, expected %#llx",
+	    (unsigned long long)(ibs_get_dc_phy_addr(readback)),
+	    (unsigned long long)(written));
 
 	/* Restore original values */
 	error = write_msr(0, MSR_IBS_DC_LIN_AD, orig_lin);
