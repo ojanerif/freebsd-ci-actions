@@ -489,24 +489,47 @@ _bai_md_to_plain() {
         gsub(/:[a-z_]+:/, "", s)
         return s
     }
-    /^---+$/ { print ""; next }
-    /^\| *[-:| ]+\|/ { next }          # separator rows in tables
-    /^\|/ {                             # table content rows
+    # Emit a buffered markdown table with every column padded to its widest
+    # cell, so the "|" separators line up across all rows.
+    function flush_table(   i, j, line, cell, pad) {
+        for (i = 1; i <= nrows; i++) {
+            line = "  "
+            for (j = 1; j <= ncols; j++) {
+                cell = tbl[i, j]
+                line = line cell
+                if (j < ncols) {
+                    pad = maxw[j] - length(cell)
+                    while (pad-- > 0) line = line " "
+                    line = line "  |  "
+                }
+            }
+            print line
+        }
+        for (i = 1; i <= nrows; i++)
+            for (j = 1; j <= ncols; j++) delete tbl[i, j]
+        for (j = 1; j <= ncols; j++) delete maxw[j]
+        nrows = 0; ncols = 0
+    }
+    # Table rows: buffer them so columns can be width-aligned on flush.
+    /^\|/ {
+        if ($0 ~ /^\| *[-:| ]+\|/) next   # separator row (|---|---|)
         line = $0
         gsub(/^\|/, "", line)
         gsub(/\|$/, "", line)
         n = split(line, cols, "|")
-        out = "  "
+        nrows++
+        if (n > ncols) ncols = n
         for (i = 1; i <= n; i++) {
             cell = cols[i]
             gsub(/^ +| +$/, "", cell)
-            cell = strip_inline(cell)
-            if (cell != "") out = out cell "  |  "
+            tbl[nrows, i] = strip_inline(cell)
+            if (length(tbl[nrows, i]) > maxw[i]) maxw[i] = length(tbl[nrows, i])
         }
-        sub(/  \|  $/, "", out)
-        print out
         next
     }
+    # Any non-table line: flush a pending table (aligned), then fall through.
+    { if (nrows > 0) flush_table() }
+    /^---+$/ { print ""; next }
     /^## / {                            # section header
         title = substr($0, 4)
         title = strip_inline(title)
@@ -539,6 +562,7 @@ _bai_md_to_plain() {
     }
     /^$/ { print ""; next }
     { print strip_inline($0) }
+    END { if (nrows > 0) flush_table() }
     ' | awk '
     # Collapse 3+ consecutive blank lines to 1
     /^$/ { blank++; if (blank <= 1) print ""; next }
