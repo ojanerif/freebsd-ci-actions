@@ -13,6 +13,10 @@
 # Configuration
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 SCRIPT_VERSION="2.1.0"
+
+# BeastAI module
+# shellcheck source=ci/beastai/beast_ai.sh
+[ -f "${SCRIPT_DIR}/ci/beastai/beast_ai.sh" ] && . "${SCRIPT_DIR}/ci/beastai/beast_ai.sh"
 REPO_URL="https://github.com/AMDESE/freebsd-src.git"
 BRANCH="amdese/integration/main"
 SRC_DIR="${SCRIPT_DIR}/dev/freebsd"
@@ -248,6 +252,8 @@ AUTO_MODE=0
 REPORT_EMAIL="${REPORT_EMAIL:-freebsd-test@mailman-svr.amd.com,ojanerif@amd.com}"   # comma-separated for multiple recipients
 SENDER_EMAIL="${SENDER_EMAIL:-freebsd-ci-actions@amd.com}"
 AUTO_KERNCONF="${AUTO_KERNCONF:-GENERIC}"
+AI_MODE=0        # --ai: run BeastAI analysis (email to ojanerif@amd.com only)
+AI_CORRECT=""    # --ai-correct: human correction stored in BeastAI memory
 AUTOTEST_SENTINEL="/var/db/ibs-autotest-sentinel"
 LAST_COMMIT_FILE="/var/db/ibs-autotest-last-commit"
 FORCE_REBUILD=0	# --force-rebuild: skip the "already tested" commit check in --auto
@@ -4571,6 +4577,21 @@ while [ $# -gt 0 ]; do
         --last-test)
             COMMAND="last-test"
             ;;
+        --ai)
+            AI_MODE=1
+            # Only set COMMAND when used standalone; combined with --run-all or
+            # --auto it just enables post-run BeastAI analysis without overriding.
+            [ -z "$COMMAND" ] && COMMAND="ai"
+            ;;
+        --ai-correct)
+            shift
+            if [ $# -eq 0 ]; then
+                log_error "--ai-correct requires an argument: \"test_id|correction text\""
+                exit 1
+            fi
+            AI_CORRECT="$1"
+            COMMAND="ai-correct"
+            ;;
         --reindex)
             COMMAND="reindex"
             ;;
@@ -4643,6 +4664,7 @@ case $COMMAND in
     run-all)
         check_root_privileges
         run_all_tests
+        [ "$AI_MODE" -eq 1 ] && beast_ai_analyze
         ;;
     run-specific)
         check_root_privileges
@@ -4677,6 +4699,12 @@ case $COMMAND in
         ;;
     last-test)
         show_last_test
+        ;;
+    ai)
+        beast_ai_analyze
+        ;;
+    ai-correct)
+        beast_ai_correct "$AI_CORRECT"
         ;;
     reindex)
         generate_html_index
