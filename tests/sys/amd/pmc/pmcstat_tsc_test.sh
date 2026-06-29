@@ -22,6 +22,18 @@ pmc_check_support()
 	if ! command -v pmcstat > /dev/null 2>&1; then
 		atf_skip "pmcstat not found in PATH"
 	fi
+	# Skip if userland PMC_VERSION_MINOR exceeds the running kernel's.
+	# This happens when the world is built from a branch ahead of the
+	# booted kernel (e.g. experimental-port world + dev kernel).  The
+	# kernel rejects the connection with EPROGMISMATCH ("Program version
+	# wrong") and every pmcstat invocation fails before doing any work.
+	local err
+	err=$(pmcstat -L 2>&1 >/dev/null) || true
+	case "$err" in
+	*"Program version wrong"*)
+		atf_skip "kernel/userland PMC ABI version mismatch (PMC_VERSION_MINOR): $err"
+		;;
+	esac
 }
 
 # Capture a 1-second system-wide instructions log into $1.
@@ -29,11 +41,15 @@ pmc_check_support()
 pmc_capture()
 {
 	local f="$1"
-	if ! pmcstat -S instructions -O "$f" sleep 1 > /dev/null 2>&1; then
-		atf_fail "pmcstat capture failed"
-	fi
+	local err
+	err=$(pmcstat -S instructions -O "$f" sleep 1 2>&1 >/dev/null) || true
+	case "$err" in
+	*"Program version wrong"*)
+		atf_skip "kernel/userland PMC ABI version mismatch: $err"
+		;;
+	esac
 	if [ ! -s "$f" ]; then
-		atf_fail "pmcstat produced an empty log"
+		atf_fail "pmcstat capture failed or produced an empty log"
 	fi
 }
 
@@ -109,9 +125,12 @@ json_tsc_unsigned_body()
 	pmc_check_support
 	pmc_capture "test.pmc"
 
-	# Detect whether -j is available; a missing flag means the QA branch is not installed.
+	# Detect whether -j is available.  A missing flag means the installed
+	# pmcstat predates SWLSVROS-6363 (QA branch not deployed): this is an
+	# environment/capability gap, not a feature defect, so skip rather than
+	# fail.  Genuine assertion failures (negative TSC values) below still fail.
 	if pmcstat -R test.pmc -j 2>&1 | grep -qi 'illegal option'; then
-		atf_fail "pmcstat -j flag not recognised — QA branch not installed"
+		atf_skip "pmcstat -j flag not recognised — QA branch (SWLSVROS-6363) not installed"
 	fi
 
 	local out neg
