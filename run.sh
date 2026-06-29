@@ -1085,6 +1085,7 @@ write_autotest_sentinel() {
         write_sentinel_var AUTOTEST_TRIGGER_TIME "$_trigger_time"
         write_sentinel_var AUTOTEST_SRC_COMMIT "$_sentinel_commit"
         write_sentinel_var AUTOTEST_WITH_STRESS "$WITH_STRESS"
+        write_sentinel_var AUTOTEST_AI_MODE "$AI_MODE"
         write_sentinel_var AUTOTEST_BRANCH "$BRANCH"
         write_sentinel_var AUTOTEST_REPO_URL "$REPO_URL"
         write_sentinel_var AUTOTEST_BRANCH_TAG "$_branch_tag"
@@ -1169,6 +1170,10 @@ ibs_autotest_run()
     case "$AUTOTEST_WITH_STRESS" in
         ""|0|1) ;;
         *) echo "Invalid AUTOTEST_WITH_STRESS in sentinel: $AUTOTEST_WITH_STRESS" >> "$LOG"; return 1 ;;
+    esac
+    case "$AUTOTEST_AI_MODE" in
+        ""|0|1) ;;
+        *) echo "Invalid AUTOTEST_AI_MODE in sentinel: $AUTOTEST_AI_MODE" >> "$LOG"; return 1 ;;
     esac
     for _c in $AUTOTEST_CATEGORIES; do
         case "$_c" in
@@ -1319,6 +1324,13 @@ ibs_autotest_run()
     IFS="$_rcd_IFS"
 
     echo "=== Report emailed to $AUTOTEST_EMAIL ===" >> "$LOG"
+
+    # BeastAI analysis (runs only when --ai was passed to --auto)
+    if [ "${AUTOTEST_AI_MODE:-0}" = "1" ]; then
+        echo "=== BeastAI: starting analysis ===" >> "$LOG"
+        sh "$SCRIPT" --ai --results-dir "$RESULTS_DIR" >> "$LOG" 2>&1
+        echo "=== BeastAI: analysis complete ===" >> "$LOG"
+    fi
 
     # Record the tested source commit so the next --auto run can skip if unchanged
     if [ -n "$AUTOTEST_SRC_COMMIT" ] && [ "$AUTOTEST_SRC_COMMIT" != "unknown" ]; then
