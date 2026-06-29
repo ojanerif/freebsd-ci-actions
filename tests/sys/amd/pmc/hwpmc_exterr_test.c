@@ -78,6 +78,17 @@ require_hwpmc(void)
 	if (pmc_init() == 0)
 		return;
 
+	/*
+	 * EPROGMISMATCH means the userland PMC_VERSION_MINOR exceeds the
+	 * running kernel's.  This is an expected CI condition when the world
+	 * is built from a branch ahead of the booted kernel (e.g.
+	 * experimental-port world + dev kernel).  Skip rather than fail so
+	 * the CI report distinguishes a version skew from a real breakage.
+	 */
+	if (errno == EPROGMISMATCH)
+		atf_tc_skip("kernel/userland PMC ABI version mismatch "
+		    "(PMC_VERSION_MINOR): %s", strerror(errno));
+
 	atf_tc_skip("hwpmc is unavailable: %s", strerror(errno));
 }
 

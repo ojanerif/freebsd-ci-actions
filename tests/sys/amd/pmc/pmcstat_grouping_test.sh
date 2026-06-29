@@ -20,6 +20,16 @@ pmcstat_check_support()
 	if ! command -v pmcstat > /dev/null 2>&1; then
 		atf_skip "pmcstat not found in PATH"
 	fi
+	# Skip if userland PMC_VERSION_MINOR exceeds the running kernel's.
+	# The kernel rejects the connection with EPROGMISMATCH ("Program version
+	# wrong"); every pmcstat call fails before doing any work.
+	local err
+	err=$(pmcstat -L 2>&1 >/dev/null) || true
+	case "$err" in
+	*"Program version wrong"*)
+		atf_skip "kernel/userland PMC ABI version mismatch (PMC_VERSION_MINOR): $err"
+		;;
+	esac
 }
 
 pmcstat_check_grouping_runtime_enabled()
@@ -105,6 +115,10 @@ pmcstat_capture_two_events()
 	if ! pmcstat -c 0 -s "$event_a" -s "$event_b" -w 1 \
 	    -o "$out" sleep "$duration" > /dev/null 2>pmcstat.err; then
 		err=$(cat pmcstat.err)
+		case "$err" in
+		*"Program version wrong"*)
+			atf_skip "kernel/userland PMC ABI version mismatch: $err" ;;
+		esac
 		atf_fail "pmcstat failed with $event_a,$event_b: $err"
 	fi
 	if [ ! -s "$out" ]; then
@@ -124,6 +138,10 @@ pmcstat_capture_process_two_events()
 	if ! pmcstat -C -q -p "$event_a" -p "$event_b" -o "$out" -- \
 	    sleep "$duration" > /dev/null 2>pmcstat.err; then
 		err=$(cat pmcstat.err)
+		case "$err" in
+		*"Program version wrong"*)
+			atf_skip "kernel/userland PMC ABI version mismatch: $err" ;;
+		esac
 		atf_fail "pmcstat failed with $event_a,$event_b: $err"
 	fi
 	if [ ! -s "$out" ]; then
@@ -153,6 +171,10 @@ pmcstat_capture_process_two_events_cpubound()
 	    -o "$out" -- dd if=/dev/zero of=/dev/null bs=4096 \
 	    count="$block_count" > /dev/null 2>pmcstat.err; then
 		err=$(cat pmcstat.err)
+		case "$err" in
+		*"Program version wrong"*)
+			atf_skip "kernel/userland PMC ABI version mismatch: $err" ;;
+		esac
 		atf_fail "pmcstat failed with $event_a,$event_b (cpu-bound): $err"
 	fi
 	if [ ! -s "$out" ]; then
