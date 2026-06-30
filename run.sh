@@ -913,7 +913,7 @@ send_report_email() {
     _verdict="$2"
     _to="${3:-$REPORT_EMAIL}"
 
-    _subject="[AMD CI] ${SUITE} Test Suite: ${_verdict} - $(hostname -s) $(date +%Y-%m-%d)"
+    _subject="[AMD CI][${BRANCH}] ${SUITE} Test Suite: ${_verdict} - $(hostname -s) $(date +%Y-%m-%d)"
 
     if [ ! -f "$_report" ]; then
         log_warning "Report file not found: $_report -sending summary only"
@@ -1395,6 +1395,7 @@ auto_mode() {
                 printf 'No new commits on branch %s since the last test run.\n' "$BRANCH"
                 printf '\n'
                 printf 'Host     : %s  (%s)\n' "$(uname -n)" "$(uname -r)"
+                printf 'Branch   : %s\n' "$BRANCH"
                 printf 'Suite    : %s\n' "$SUITE"
                 printf 'Kernel   : %s\n' "$AUTO_KERNCONF"
                 printf 'Commit   : %s\n' "$_current_commit"
@@ -1403,7 +1404,7 @@ auto_mode() {
                 printf '\n'
                 printf 'Nothing to do -no build or reboot was started.\n'
             )
-            mail_all "[AMD CI] Kernel up to date, already tested - $(hostname -s) $(date +%Y-%m-%d)" \
+            mail_all "[AMD CI][${BRANCH}] Kernel up to date, already tested - $(hostname -s) $(date +%Y-%m-%d)" \
                 "$_uptodate_body" "$_email"
             generate_html_skipped_report "$_current_commit" "$BRANCH"
             return 0
