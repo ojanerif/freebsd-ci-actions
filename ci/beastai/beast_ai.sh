@@ -24,6 +24,19 @@ BEAST_AI_MEMORY="${BEAST_AI_DIR}/beast_ai_memory.jsonl"
 BEAST_AI_SYSTEM_PROMPT="${BEAST_AI_DIR}/prompts/system.txt"
 BEAST_AI_MODEL="claude-sonnet-4-6"   # latest Sonnet 4.6; update when new model releases
 BEAST_AI_CLI="${BEAST_AI_CLI:-/usr/local/bin/claude}" # absolute path — rc.d/cron have minimal PATH
+# If set to a bare name (e.g. "claude"), resolve to absolute path so it works
+# in rc.d/cron environments where PATH does not include /usr/local/bin.
+case "$BEAST_AI_CLI" in
+    /*) : ;;  # already absolute
+    *)  for _bai_dir in /usr/local/bin /usr/local/sbin /usr/bin; do
+            if [ -x "${_bai_dir}/${BEAST_AI_CLI}" ]; then
+                BEAST_AI_CLI="${_bai_dir}/${BEAST_AI_CLI}"
+                break
+            fi
+        done
+        unset _bai_dir
+        ;;
+esac
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -43,10 +56,14 @@ _bai_json_str() {
 
 # Verify claude CLI is available
 _bai_check_cli() {
-    if ! command -v "$BEAST_AI_CLI" >/dev/null 2>&1; then
-        log_error "BeastAI: '${BEAST_AI_CLI}' not found. Install Claude Code CLI."
-        return 1
+    if [ -x "$BEAST_AI_CLI" ]; then
+        return 0
     fi
+    if command -v "$BEAST_AI_CLI" >/dev/null 2>&1; then
+        return 0
+    fi
+    log_error "BeastAI: '${BEAST_AI_CLI}' not found. Install Claude Code CLI."
+    return 1
 }
 
 # ── Memory ────────────────────────────────────────────────────────────────────
@@ -371,22 +388,64 @@ beast_ai_html_report() {
     _ai_text="$1"
     _out_html="${RESULTS_DIR}/beast-ai-report.html"
 
-    # Convert minimal Markdown to HTML (headers, bold, lists, line breaks)
+    # Convert minimal Markdown to HTML (headers, bold, lists, tables, breaks)
     _body_html=$(printf '%s\n' "$_ai_text" | awk '
-        /^## / { gsub(/^## /,""); printf "<h2>%s</h2>\n", $0; next }
-        /^\*\*/ {
-            line = $0
-            while (match(line, /\*\*[^*]+\*\*/)) {
-                pre  = substr(line, 1, RSTART-1)
-                mid  = substr(line, RSTART+2, RLENGTH-4)
-                line = pre "<strong>" mid "</strong>" substr(line, RSTART+RLENGTH)
-            }
-            print line; next
+        function bold(s) {
+            while (match(s, /\*\*[^*]+\*\*/))
+                s = substr(s, 1, RSTART-1) "<strong>" \
+                    substr(s, RSTART+2, RLENGTH-4) "</strong>" \
+                    substr(s, RSTART+RLENGTH)
+            return s
         }
+        # Emit a buffered markdown table as a real HTML <table> with INLINE
+        # styles (email clients strip <style> blocks), so columns render as a
+        # bordered grid regardless of the recipient font. Row 1 = header.
+        function flush_table(   i, j, tag, st, cell) {
+            if (trows == 0) return
+            print "<table style=\"border-collapse:collapse;margin:12px 0;" \
+                "font-family:ui-monospace,monospace;font-size:13px\">"
+            for (i = 1; i <= trows; i++) {
+                print "<tr>"
+                if (i == 1) {
+                    tag = "th"
+                    st = "border:1px solid #30363d;padding:5px 12px;" \
+                        "text-align:left;background:#161b22;color:#58a6ff"
+                } else {
+                    tag = "td"
+                    st = "border:1px solid #30363d;padding:5px 12px;" \
+                        "text-align:left"
+                }
+                for (j = 1; j <= tcols; j++)
+                    printf "<%s style=\"%s\">%s</%s>\n", tag, st, tcell[i, j], tag
+                print "</tr>"
+            }
+            print "</table>"
+            for (i = 1; i <= trows; i++)
+                for (j = 1; j <= tcols; j++) delete tcell[i, j]
+            trows = 0; tcols = 0
+        }
+        /^\|/ {
+            if ($0 ~ /^\| *[-:| ]+\|/) next   # separator row (|---|---|)
+            line = $0
+            gsub(/^\|/, "", line); gsub(/\|$/, "", line)
+            n = split(line, c, "|")
+            trows++
+            if (n > tcols) tcols = n
+            for (i = 1; i <= n; i++) {
+                cell = c[i]
+                gsub(/^ +| +$/, "", cell)
+                tcell[trows, i] = bold(cell)
+            }
+            next
+        }
+        { if (trows > 0) flush_table() }
+        /^## / { gsub(/^## /,""); printf "<h2>%s</h2>\n", $0; next }
+        /^\*\*/ { print bold($0); next }
         /^[0-9]+\. / { printf "<li>%s</li>\n", substr($0, index($0," ")+1); next }
         /^- /        { printf "<li>%s</li>\n", substr($0, 3); next }
         /^$/         { print "<br>"; next }
         { print $0 "<br>" }
+        END { if (trows > 0) flush_table() }
     ')
 
     _commit_short=$(_bai_short_commit "$_bai_commit")
@@ -579,8 +638,10 @@ beast_ai_email() {
     _commit_short=$(_bai_short_commit "$_bai_commit")
     _subject="[BeastAI] ${_bai_branch} @ ${_commit_short}: ${_bai_verdict} — $(_bai_date)"
     _report_txt="${RESULTS_DIR:-}/report.txt"
-    _boundary="----=_BeastAIPart_$(date +%s)_$$"
+    _boundary="----=_BeastAIMixed_$(date +%s)_$$"
+    _alt_boundary="----=_BeastAIAlt_$(date +%s)_$$"
     _sep="--${_boundary}"
+    _alt_sep="--${_alt_boundary}"
 
     if [ "$DRY_RUN" -eq 1 ]; then
         log_info "BeastAI (dry run): would email '${_subject}' to '${BEAST_AI_EMAIL}'"
@@ -593,16 +654,25 @@ beast_ai_email() {
         printf 'Subject: %s\n' "$_subject"
         printf 'MIME-Version: 1.0\n'
         printf 'Content-Type: multipart/mixed; boundary="%s"\n\n' "$_boundary"
+
+        # Body: multipart/alternative so clients render the HTML (with real
+        # tables) inline and fall back to plain text. The HTML version is what
+        # makes tables look good — plain-text columns misalign in proportional
+        # fonts used by most mail clients.
         printf '%s\n' "$_sep"
+        printf 'Content-Type: multipart/alternative; boundary="%s"\n\n' "$_alt_boundary"
+        printf '%s\n' "$_alt_sep"
         printf 'Content-Type: text/plain; charset=utf-8\n\n'
         printf '%s\n\n' "$_plain_body"
         if [ -f "$_ai_html" ]; then
-            printf '%s\n' "$_sep"
-            printf 'Content-Type: text/html; name="beast-ai-report.html"\n'
-            printf 'Content-Disposition: attachment; filename="beast-ai-report.html"\n\n'
+            printf '%s\n' "$_alt_sep"
+            printf 'Content-Type: text/html; charset=utf-8\n\n'
             cat "$_ai_html"
             printf '\n'
         fi
+        printf '%s--\n' "$_alt_sep"
+
+        # report.txt stays as a downloadable attachment.
         if [ -f "$_report_txt" ]; then
             printf '%s\n' "$_sep"
             printf 'Content-Type: text/plain; name="report.txt"\n'
