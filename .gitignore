@@ -19,6 +19,8 @@ obj/
 obj.*
 
 # Compiled ATF test binaries and debug artifacts
+# .pieo are position-independent object build artifacts — never committed
+*.pieo
 tests/sys/amd/ibs/ibs_*test
 tests/sys/amd/ibs/ibs_*test.debug
 tests/sys/amd/ibs/ibs_*test.full
