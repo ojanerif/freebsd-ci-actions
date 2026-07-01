@@ -336,10 +336,10 @@ ATF_TC_BODY(ibs_stress_long_running, tc)
 	ncpus = get_ncpus();
 
 	threads = calloc(ncpus, sizeof(pthread_t));
-	ATF_REQUIRE(threads != NULL);
+	ATF_REQUIRE_MSG(threads != NULL, "calloc of thread array failed");
 
 	args = calloc(ncpus, sizeof(struct long_running_arg));
-	ATF_REQUIRE(args != NULL);
+	ATF_REQUIRE_MSG(args != NULL, "calloc of thread-arg array failed");
 
 	/* Initialize and start threads */
 	for (i = 0; i < ncpus; i++) {
@@ -448,10 +448,10 @@ ATF_TC_BODY(ibs_stress_concurrent_msr_access, tc)
 		atf_tc_skip("Test requires multiple CPUs (found %d)", ncpus);
 
 	threads = calloc(ncpus, sizeof(pthread_t));
-	ATF_REQUIRE(threads != NULL);
+	ATF_REQUIRE_MSG(threads != NULL, "calloc of thread array failed");
 
 	args = calloc(ncpus, sizeof(struct concurrent_msr_arg));
-	ATF_REQUIRE(args != NULL);
+	ATF_REQUIRE_MSG(args != NULL, "calloc of thread-arg array failed");
 
 	/* Initialize and start threads */
 	for (i = 0; i < ncpus; i++) {

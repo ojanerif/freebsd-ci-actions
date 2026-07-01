@@ -163,8 +163,11 @@ ATF_TC_BODY(ibs_interrupt_nmi_handler, tc)
 	/* Verify enable bit is set */
 	error = read_msr(0, MSR_IBS_FETCH_CTL, &ctl);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((ctl & IBS_FETCH_CTL_ENABLE) != 0);
-	ATF_CHECK((ctl & IBS_FETCH_CTL_MAXCNTMASK) == IBS_INTERRUPT_TEST_PERIOD);
+	ATF_CHECK_MSG((ctl & IBS_FETCH_CTL_ENABLE) != 0,
+	    "IBS Fetch enable bit not set after write: 0x%jx", (uintmax_t)ctl);
+	ATF_CHECK_MSG((ctl & IBS_FETCH_CTL_MAXCNTMASK) == IBS_INTERRUPT_TEST_PERIOD,
+	    "IBS Fetch MaxCnt mismatch: got 0x%jx, want 0x%x",
+	    (uintmax_t)(ctl & IBS_FETCH_CTL_MAXCNTMASK), IBS_INTERRUPT_TEST_PERIOD);
 
 	/*
 	 * Test 2: Disable IBS Fetch cleanly.
@@ -177,7 +180,9 @@ ATF_TC_BODY(ibs_interrupt_nmi_handler, tc)
 	/* Verify enable bit is cleared */
 	error = read_msr(0, MSR_IBS_FETCH_CTL, &ctl);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((ctl & IBS_FETCH_CTL_ENABLE) == 0);
+	ATF_CHECK_MSG((ctl & IBS_FETCH_CTL_ENABLE) == 0,
+	    "IBS Fetch enable bit not cleared after disable: 0x%jx",
+	    (uintmax_t)ctl);
 
 	/*
 	 * Test 3: Enable IBS Op with a valid period.
@@ -190,8 +195,11 @@ ATF_TC_BODY(ibs_interrupt_nmi_handler, tc)
 	/* Verify enable bit is set */
 	error = read_msr(0, MSR_IBS_OP_CTL, &ctl);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((ctl & IBS_OP_CTL_ENABLE) != 0);
-	ATF_CHECK((ctl & IBS_OP_CTL_MAXCNTMASK) == IBS_INTERRUPT_TEST_PERIOD);
+	ATF_CHECK_MSG((ctl & IBS_OP_CTL_ENABLE) != 0,
+	    "IBS Op enable bit not set after write: 0x%jx", (uintmax_t)ctl);
+	ATF_CHECK_MSG((ctl & IBS_OP_CTL_MAXCNTMASK) == IBS_INTERRUPT_TEST_PERIOD,
+	    "IBS Op MaxCnt mismatch: got 0x%jx, want 0x%x",
+	    (uintmax_t)(ctl & IBS_OP_CTL_MAXCNTMASK), IBS_INTERRUPT_TEST_PERIOD);
 
 	/*
 	 * Test 4: Disable IBS Op cleanly.
@@ -203,7 +211,9 @@ ATF_TC_BODY(ibs_interrupt_nmi_handler, tc)
 	/* Verify enable bit is cleared */
 	error = read_msr(0, MSR_IBS_OP_CTL, &ctl);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((ctl & IBS_OP_CTL_ENABLE) == 0);
+	ATF_CHECK_MSG((ctl & IBS_OP_CTL_ENABLE) == 0,
+	    "IBS Op enable bit not cleared after disable: 0x%jx",
+	    (uintmax_t)ctl);
 
 	/* Restore original state */
 	error = write_msr(0, MSR_IBS_FETCH_CTL, original_fetch);

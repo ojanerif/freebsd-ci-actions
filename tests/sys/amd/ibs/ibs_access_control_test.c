@@ -74,7 +74,7 @@ ATF_TC_BODY(ibs_nonroot_cpuctl_open, tc)
 		close(fd_check);
 
 	pid = fork();
-	ATF_REQUIRE(pid >= 0);
+	ATF_REQUIRE_MSG(pid >= 0, "fork() failed: %s", strerror(errno));
 
 	if (pid == 0) {
 		/* Child: drop to unprivileged user */
@@ -92,7 +92,8 @@ ATF_TC_BODY(ibs_nonroot_cpuctl_open, tc)
 	}
 
 	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status));
+	ATF_REQUIRE_MSG(WIFEXITED(status),
+	    "child did not exit normally (status=0x%x)", status);
 
 	switch (WEXITSTATUS(status)) {
 	case CHILD_PASS:
@@ -132,7 +133,7 @@ ATF_TC_BODY(ibs_nonroot_msr_read, tc)
 		close(fd_check);
 
 	pid = fork();
-	ATF_REQUIRE(pid >= 0);
+	ATF_REQUIRE_MSG(pid >= 0, "fork() failed: %s", strerror(errno));
 
 	if (pid == 0) {
 		if (setuid(unpriv_uid) != 0)
@@ -154,7 +155,8 @@ ATF_TC_BODY(ibs_nonroot_msr_read, tc)
 	}
 
 	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status));
+	ATF_REQUIRE_MSG(WIFEXITED(status),
+	    "child did not exit normally (status=0x%x)", status);
 
 	switch (WEXITSTATUS(status)) {
 	case CHILD_PASS:
@@ -195,7 +197,7 @@ ATF_TC_BODY(ibs_nonroot_msr_write, tc)
 		close(fd_check);
 
 	pid = fork();
-	ATF_REQUIRE(pid >= 0);
+	ATF_REQUIRE_MSG(pid >= 0, "fork() failed: %s", strerror(errno));
 
 	if (pid == 0) {
 		if (setuid(unpriv_uid) != 0)
@@ -212,7 +214,8 @@ ATF_TC_BODY(ibs_nonroot_msr_write, tc)
 	}
 
 	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status));
+	ATF_REQUIRE_MSG(WIFEXITED(status),
+	    "child did not exit normally (status=0x%x)", status);
 
 	switch (WEXITSTATUS(status)) {
 	case CHILD_PASS:

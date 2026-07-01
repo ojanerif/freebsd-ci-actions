@@ -25,7 +25,8 @@ ATF_TC_BODY(ibs_detect, tc)
 	if (!cpu_supports_ibs())
 		atf_tc_skip("CPU does not support IBS");
 
-	ATF_CHECK(cpu_supports_ibs());
+	ATF_CHECK_MSG(cpu_supports_ibs(),
+	    "cpu_supports_ibs() must return true after the skip guard passed");
 }
 
 ATF_TC(ibs_detect_extended);
@@ -41,7 +42,8 @@ ATF_TC_BODY(ibs_detect_extended, tc)
 		atf_tc_skip("CPU does not support IBS");
 
 	/* Test extended IBS features */
-	ATF_CHECK(cpu_ibs_extended());
+	ATF_CHECK_MSG(cpu_ibs_extended(),
+	    "cpu_ibs_extended() must report extended IBS features present");
 }
 
 ATF_TC(ibs_detect_zen4);
@@ -65,11 +67,16 @@ ATF_TC_BODY(ibs_detect_zen4, tc)
 
 	/* Check for IBS Op Data 4 capability */
 	error = do_cpuid_ioctl(0x8000001B, regs);
-	ATF_REQUIRE(error == 0);
-	ATF_CHECK((regs[0] & IBS_CPUID_OP_DATA_4) != 0);
+	ATF_REQUIRE_MSG(error == 0,
+	    "do_cpuid_ioctl(0x8000001B) failed: %d", error);
+	ATF_CHECK_MSG((regs[0] & IBS_CPUID_OP_DATA_4) != 0,
+	    "Zen 4+ CPU must advertise IbsOpData4 in CPUID 0x8000001B EAX: 0x%x",
+	    regs[0]);
 
 	/* Check for Zen4 IBS capability */
-	ATF_CHECK((regs[0] & IBS_CPUID_ZEN4_IBS) != 0);
+	ATF_CHECK_MSG((regs[0] & IBS_CPUID_ZEN4_IBS) != 0,
+	    "Zen 4+ CPU must advertise Zen4IbsExt in CPUID 0x8000001B EAX: 0x%x",
+	    regs[0]);
 }
 
 ATF_TC(ibs_detect_msr_access);
@@ -88,14 +95,16 @@ ATF_TC_BODY(ibs_detect_msr_access, tc)
 		atf_tc_skip("CPU does not support IBS");
 
 	/* Test basic IBS MSR access */
-	ATF_REQUIRE(read_msr(cpu, MSR_AMD64_IBSCTL, &val) == 0);
+	ATF_REQUIRE_MSG(read_msr(cpu, MSR_AMD64_IBSCTL, &val) == 0,
+	    "read_msr(MSR_AMD64_IBSCTL) failed on cpu %d", cpu);
 
 	/* Test Zen 4+ extended MSRs if available */
 	if (cpu_is_zen4()) {
 		int r;
 
 		/* Test IC IBS Extended Control MSR */
-		ATF_REQUIRE(read_msr(cpu, MSR_AMD64_ICIBSEXTDCTL, &val) == 0);
+		ATF_REQUIRE_MSG(read_msr(cpu, MSR_AMD64_ICIBSEXTDCTL, &val) == 0,
+		    "read_msr(MSR_AMD64_ICIBSEXTDCTL) failed on cpu %d", cpu);
 
 		/*
 		 * MSR_AMD64_IBSOPDATA4 is a read-only status register that is

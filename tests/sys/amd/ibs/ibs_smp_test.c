@@ -304,10 +304,10 @@ ATF_TC_BODY(ibs_smp_concurrent_sampling, tc)
 		atf_tc_skip("Test requires multiple CPUs (found %d)", ncpus);
 
 	threads = calloc(ncpus, sizeof(pthread_t));
-	ATF_REQUIRE(threads != NULL);
+	ATF_REQUIRE_MSG(threads != NULL, "calloc of thread array failed");
 
 	args = calloc(ncpus, sizeof(struct smp_concurrent_arg));
-	ATF_REQUIRE(args != NULL);
+	ATF_REQUIRE_MSG(args != NULL, "calloc of thread-arg array failed");
 
 	/* Initialize and start enable threads */
 	for (i = 0; i < ncpus; i++) {

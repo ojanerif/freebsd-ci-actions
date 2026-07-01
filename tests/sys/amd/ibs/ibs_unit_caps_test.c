@@ -42,8 +42,10 @@ ATF_TC_BODY(ibs_unit_caps_fetch_sam_implies_fetch_en_field, tc)
 {
 	ATF_CHECK_MSG(IBS_FETCH_EN != 0ULL,
 	    "IBS_FETCH_EN must be a non-zero mask in MSR_IBS_FETCH_CTL");
-	ATF_CHECK(ibs_feat_fetch_sampling(IBS_CPUID_FETCH_SAMPLING) == true);
-	ATF_CHECK(ibs_feat_fetch_sampling(0U) == false);
+	ATF_CHECK_MSG(ibs_feat_fetch_sampling(IBS_CPUID_FETCH_SAMPLING) == true,
+	    "ibs_feat_fetch_sampling must be true when IBS_CPUID_FETCH_SAMPLING is set");
+	ATF_CHECK_MSG(ibs_feat_fetch_sampling(0U) == false,
+	    "ibs_feat_fetch_sampling must be false when no caps bits are set");
 }
 
 /*
@@ -56,8 +58,10 @@ ATF_TC_BODY(ibs_unit_caps_op_sam_implies_op_en_field, tc)
 {
 	ATF_CHECK_MSG(IBS_OP_EN != 0ULL,
 	    "IBS_OP_EN must be a non-zero mask in MSR_IBS_OP_CTL");
-	ATF_CHECK(ibs_feat_op_sampling(IBS_CPUID_OP_SAMPLING) == true);
-	ATF_CHECK(ibs_feat_op_sampling(0U) == false);
+	ATF_CHECK_MSG(ibs_feat_op_sampling(IBS_CPUID_OP_SAMPLING) == true,
+	    "ibs_feat_op_sampling must be true when IBS_CPUID_OP_SAMPLING is set");
+	ATF_CHECK_MSG(ibs_feat_op_sampling(0U) == false,
+	    "ibs_feat_op_sampling must be false when no caps bits are set");
 }
 
 /*
@@ -121,9 +125,11 @@ ATF_TC_BODY(ibs_unit_caps_zen4_implies_l3missonly_field, tc)
 	    "IBS_L3_MISS_ONLY must be non-zero in MSR_IBS_FETCH_CTL");
 	ATF_CHECK_MSG(IBS_OP_L3_MISS_ONLY != 0ULL,
 	    "IBS_OP_L3_MISS_ONLY must be non-zero in MSR_IBS_OP_CTL");
-	ATF_CHECK(ibs_feat_zen4(IBS_CPUID_ZEN4_IBS) == true);
-	ATF_CHECK(ibs_feat_zen4(IBS_CPUID_ZEN4_IBS ^ IBS_CPUID_ZEN4_IBS) ==
-	    false);
+	ATF_CHECK_MSG(ibs_feat_zen4(IBS_CPUID_ZEN4_IBS) == true,
+	    "ibs_feat_zen4 must be true when IBS_CPUID_ZEN4_IBS is set");
+	ATF_CHECK_MSG(ibs_feat_zen4(IBS_CPUID_ZEN4_IBS ^ IBS_CPUID_ZEN4_IBS) ==
+	    false,
+	    "ibs_feat_zen4 must be false when the Zen4 caps bit is cleared");
 }
 
 /*
@@ -151,9 +157,12 @@ ATF_TC_BODY(ibs_unit_caps_zen4_implies_op_ext_maxcnt_field, tc)
 ATF_TC_WITHOUT_HEAD(ibs_unit_caps_no_caps_all_accessors_false);
 ATF_TC_BODY(ibs_unit_caps_no_caps_all_accessors_false, tc)
 {
-	ATF_CHECK(ibs_feat_fetch_sampling(0U) == false);
-	ATF_CHECK(ibs_feat_op_sampling(0U) == false);
-	ATF_CHECK(ibs_feat_zen4(0U) == false);
+	ATF_CHECK_MSG(ibs_feat_fetch_sampling(0U) == false,
+	    "EAX=0 must yield ibs_feat_fetch_sampling == false");
+	ATF_CHECK_MSG(ibs_feat_op_sampling(0U) == false,
+	    "EAX=0 must yield ibs_feat_op_sampling == false");
+	ATF_CHECK_MSG(ibs_feat_zen4(0U) == false,
+	    "EAX=0 must yield ibs_feat_zen4 == false");
 }
 
 /*
@@ -173,9 +182,12 @@ ATF_TC_BODY(ibs_unit_caps_all_caps_all_accessors_true, tc)
 	    IBS_CPUID_OP_DATA_4      |
 	    IBS_CPUID_ZEN4_IBS;
 
-	ATF_CHECK(ibs_feat_fetch_sampling(all_caps) == true);
-	ATF_CHECK(ibs_feat_op_sampling(all_caps) == true);
-	ATF_CHECK(ibs_feat_zen4(all_caps) == true);
+	ATF_CHECK_MSG(ibs_feat_fetch_sampling(all_caps) == true,
+	    "full caps word must yield ibs_feat_fetch_sampling == true");
+	ATF_CHECK_MSG(ibs_feat_op_sampling(all_caps) == true,
+	    "full caps word must yield ibs_feat_op_sampling == true");
+	ATF_CHECK_MSG(ibs_feat_zen4(all_caps) == true,
+	    "full caps word must yield ibs_feat_zen4 == true");
 }
 
 /* -----------------------------------------------------------------------

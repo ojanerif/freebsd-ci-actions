@@ -141,8 +141,9 @@ ATF_TC_BODY(net_stress_unix_socketpair, tc)
 	pairs       = calloc((size_t)n, sizeof(struct unix_pair_arg));
 	prod_threads = calloc((size_t)n, sizeof(pthread_t));
 	cons_threads = calloc((size_t)n, sizeof(pthread_t));
-	ATF_REQUIRE(pairs != NULL && prod_threads != NULL &&
-	    cons_threads != NULL);
+	ATF_REQUIRE_MSG(pairs != NULL && prod_threads != NULL &&
+	    cons_threads != NULL,
+	    "calloc of pair/producer/consumer arrays failed");
 
 	for (i = 0; i < n; i++) {
 		pairs[i].stop     = &stop;
@@ -367,7 +368,8 @@ ATF_TC_BODY(net_stress_loopback_tcp, tc)
 	n = net_nthreads();
 	clients       = calloc((size_t)n, sizeof(struct tcp_client_arg));
 	client_threads = calloc((size_t)n, sizeof(pthread_t));
-	ATF_REQUIRE(clients != NULL && client_threads != NULL);
+	ATF_REQUIRE_MSG(clients != NULL && client_threads != NULL,
+	    "calloc of client/thread arrays failed");
 
 	for (i = 0; i < n; i++) {
 		clients[i].ctx        = &ctx;

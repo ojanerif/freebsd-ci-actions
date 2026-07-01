@@ -65,7 +65,7 @@ ATF_TC_BODY(ibs_concurrent_multiprocess, tc)
 
 	for (i = 0; i < ncpus; i++) {
 		pids[i] = fork();
-		ATF_REQUIRE(pids[i] >= 0);
+		ATF_REQUIRE_MSG(pids[i] >= 0, "fork() failed: %s", strerror(errno));
 
 		if (pids[i] == 0) {
 			int j;

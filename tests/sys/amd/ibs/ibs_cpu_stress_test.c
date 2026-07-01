@@ -152,7 +152,8 @@ ATF_TC_BODY(ibs_cpu_stress_compute, tc)
 
 	threads = calloc((size_t)ncpus, sizeof(pthread_t));
 	args    = calloc((size_t)ncpus, sizeof(struct compute_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	error = read_msr(0, MSR_IBS_OP_CTL, &original);
 	if (error != 0) {
@@ -282,7 +283,8 @@ ATF_TC_BODY(ibs_cpu_stress_context_switch, tc)
 
 	threads = calloc((size_t)nthreads, sizeof(pthread_t));
 	args    = calloc((size_t)nthreads, sizeof(struct ctx_switch_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	error = read_msr(0, MSR_IBS_OP_CTL, &original);
 	if (error != 0) {

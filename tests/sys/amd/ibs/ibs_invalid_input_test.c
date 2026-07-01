@@ -57,7 +57,7 @@ ATF_TC_BODY(ibs_invalid_msr_below_range, tc)
 	fd = open_cpuctl0();
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open_cpuctl0() failed: %s", strerror(errno));
 
 	/* 0xC001102F is one MSR below MSR_IBS_FETCH_CTL (0xC0011030) */
 	args.msr  = 0xC001102FU;
@@ -91,7 +91,7 @@ ATF_TC_BODY(ibs_invalid_msr_gap, tc)
 	fd = open_cpuctl0();
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open_cpuctl0() failed: %s", strerror(errno));
 
 	/* MSR_AMD64_IBSBRTARGET (0xC001103B) may be read-only or restricted */
 	args.msr  = 0xC001103BU;
@@ -125,7 +125,7 @@ ATF_TC_BODY(ibs_invalid_msr_above_range, tc)
 	fd = open_cpuctl0();
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open_cpuctl0() failed: %s", strerror(errno));
 
 	/* 0xC001103E is one above MSR_AMD64_IBSOPDATA4 (0xC001103D) */
 	args.msr  = 0xC001103EU;
@@ -158,7 +158,7 @@ ATF_TC_BODY(ibs_invalid_msr_garbage, tc)
 	fd = open_cpuctl0();
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open_cpuctl0() failed: %s", strerror(errno));
 
 	args.msr  = 0xDEADBEEFU;
 	args.data = 0;
@@ -191,7 +191,7 @@ ATF_TC_BODY(ibs_wrmsr_null_argp, tc)
 	fd = open_cpuctl0();
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open_cpuctl0() failed: %s", strerror(errno));
 
 	ret = ioctl(fd, CPUCTL_WRMSR, NULL);
 	ATF_CHECK_MSG(ret == -1, "CPUCTL_WRMSR NULL argp should fail");
@@ -218,7 +218,7 @@ ATF_TC_BODY(ibs_rdmsr_null_argp, tc)
 	fd = open_cpuctl0();
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open_cpuctl0() failed: %s", strerror(errno));
 
 	ret = ioctl(fd, CPUCTL_RDMSR, NULL);
 	ATF_CHECK_MSG(ret == -1, "CPUCTL_RDMSR NULL argp should fail");
@@ -245,7 +245,7 @@ ATF_TC_BODY(ibs_unknown_ioctl_cmd, tc)
 	fd = open_cpuctl0();
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open_cpuctl0() failed: %s", strerror(errno));
 
 	ret = ioctl(fd, (unsigned long)0xDEADUL, NULL);
 	ATF_CHECK_MSG(ret == -1, "unknown ioctl should fail");

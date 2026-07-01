@@ -44,7 +44,8 @@ ATF_TC_BODY(ibs_cpu_detect_family, tc)
 	}
 
 	family = cpu_get_family();
-	ATF_CHECK(family >= 0x10);
+	ATF_CHECK_MSG(family >= 0x10,
+	    "AMD IBS-capable CPU must be Family 0x10 or later, got 0x%x", family);
 
 	/* Print detected family for debugging */
 	printf("Detected AMD CPU Family: 0x%x\n", family);
@@ -108,8 +109,12 @@ ATF_TC_BODY(ibs_cpu_zen4_detection, tc)
 		    family, model);
 	}
 
-	ATF_CHECK(cpu_is_zen4());
-	ATF_CHECK(!cpu_is_zen5());
+	ATF_CHECK_MSG(cpu_is_zen4(),
+	    "cpu_is_zen4() must be true after the Zen4 skip guard (Family 0x%x, Model 0x%x)",
+	    family, model);
+	ATF_CHECK_MSG(!cpu_is_zen5(),
+	    "cpu_is_zen5() must be false on a Zen4 CPU (Family 0x%x, Model 0x%x)",
+	    family, model);
 
 	printf("Zen4 detected: Family 0x%x, Model 0x%x\n", family, model);
 
@@ -151,8 +156,12 @@ ATF_TC_BODY(ibs_cpu_zen5_detection, tc)
 		    family, model);
 	}
 
-	ATF_CHECK(cpu_is_zen5());
-	ATF_CHECK(!cpu_is_zen4());
+	ATF_CHECK_MSG(cpu_is_zen5(),
+	    "cpu_is_zen5() must be true after the Zen5 skip guard (Family 0x%x, Model 0x%x)",
+	    family, model);
+	ATF_CHECK_MSG(!cpu_is_zen4(),
+	    "cpu_is_zen4() must be false on a Zen5 CPU (Family 0x%x, Model 0x%x)",
+	    family, model);
 
 	printf("Zen5 detected: Family 0x%x, Model 0x%x\n", family, model);
 
@@ -235,7 +244,9 @@ ATF_TC_BODY(ibs_cpu_tsc_frequency, tc)
 	 * should work via CPUID 0x15 or 0x16.
 	 */
 	if (family == 0x19 || family == 0x1a) {
-		ATF_CHECK(tsc_freq > 0);
+		ATF_CHECK_MSG(tsc_freq > 0,
+		    "Zen4/Zen5 (Family 0x%x) must report a non-zero TSC frequency",
+		    family);
 		printf("Zen4/Zen5 TSC frequency verified: %ju Hz\n",
 		    (uintmax_t)tsc_freq);
 	}

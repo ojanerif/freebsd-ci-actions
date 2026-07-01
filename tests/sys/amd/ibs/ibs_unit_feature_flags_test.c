@@ -73,18 +73,23 @@ ATF_TC_WITHOUT_HEAD(ibs_unit_feat_parse_zen4);
 ATF_TC_BODY(ibs_unit_feat_parse_zen4, tc)
 {
 	/* 0x7F = bits 0-6 all set — all features present including Zen4 */
-	ATF_CHECK(ibs_feat_zen4(0x7FU) == true);
+	ATF_CHECK_MSG(ibs_feat_zen4(0x7FU) == true,
+	    "ibs_feat_zen4(0x7F) must be true (bit 6 set)");
 	/* 0x3F = bits 0-5 set, bit 6 clear — no Zen4 */
-	ATF_CHECK(ibs_feat_zen4(0x3FU) == false);
+	ATF_CHECK_MSG(ibs_feat_zen4(0x3FU) == false,
+	    "ibs_feat_zen4(0x3F) must be false (bit 6 clear)");
 }
 
 /* TC-UNIT-FEAT-09: ibs_feat_fetch_sampling() returns false when EAX is 0 */
 ATF_TC_WITHOUT_HEAD(ibs_unit_feat_parse_none);
 ATF_TC_BODY(ibs_unit_feat_parse_none, tc)
 {
-	ATF_CHECK(ibs_feat_fetch_sampling(0U) == false);
-	ATF_CHECK(ibs_feat_op_sampling(0U) == false);
-	ATF_CHECK(ibs_feat_zen4(0U) == false);
+	ATF_CHECK_MSG(ibs_feat_fetch_sampling(0U) == false,
+	    "EAX=0 must yield ibs_feat_fetch_sampling == false");
+	ATF_CHECK_MSG(ibs_feat_op_sampling(0U) == false,
+	    "EAX=0 must yield ibs_feat_op_sampling == false");
+	ATF_CHECK_MSG(ibs_feat_zen4(0U) == false,
+	    "EAX=0 must yield ibs_feat_zen4 == false");
 }
 
 /* TC-UNIT-FEAT-10: all six feature bits are independent (no aliases) */

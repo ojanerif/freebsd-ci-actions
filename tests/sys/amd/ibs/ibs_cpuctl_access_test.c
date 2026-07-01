@@ -91,7 +91,9 @@ ATF_TC_BODY(ibs_cpuctl_open_rdonly, tc)
 	ATF_CHECK_MSG(ret != 0,
 	    "CPUCTL_WRMSR succeeded on O_RDONLY fd — expected failure");
 	if (ret != 0)
-		ATF_CHECK(errno == EBADF || errno == EPERM || errno == EACCES);
+		ATF_CHECK_MSG(errno == EBADF || errno == EPERM || errno == EACCES,
+		    "CPUCTL_WRMSR on O_RDONLY fd failed with unexpected errno=%d (%s)",
+		    errno, strerror(errno));
 
 	close(fd);
 }
@@ -152,7 +154,7 @@ ATF_TC_BODY(ibs_cpuctl_cpuid_ibs_leaf, tc)
 	fd = open("/dev/cpuctl0", O_RDONLY);
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open(/dev/cpuctl0) failed: %s", strerror(errno));
 
 	args.level = 0x8000001BU;
 	ret = ioctl(fd, CPUCTL_CPUID, &args);
@@ -190,7 +192,7 @@ ATF_TC_BODY(ibs_cpuctl_cpuid_basic_leaf, tc)
 	fd = open("/dev/cpuctl0", O_RDONLY);
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("/dev/cpuctl0 not present");
-	ATF_REQUIRE(fd >= 0);
+	ATF_REQUIRE_MSG(fd >= 0, "open(/dev/cpuctl0) failed: %s", strerror(errno));
 
 	args.level = 0x0U;
 	ATF_REQUIRE_ERRNO(0, ioctl(fd, CPUCTL_CPUID, &args) == 0);

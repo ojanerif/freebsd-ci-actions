@@ -84,7 +84,9 @@ ATF_TC_BODY(ibs_hwpmc_alloc_reject_counting_mode, tc)
 		atf_tc_fail("IBS Fetch allocation unexpectedly succeeded in "
 		    "counting mode");
 	}
-	ATF_CHECK(errno == EINVAL);
+	ATF_CHECK_MSG(errno == EINVAL,
+	    "expected pmc_allocate to fail with EINVAL, got errno=%d (%s)",
+	    errno, strerror(errno));
 }
 
 ATF_TC(ibs_hwpmc_alloc_reject_bad_rate);
@@ -110,7 +112,9 @@ ATF_TC_BODY(ibs_hwpmc_alloc_reject_bad_rate, tc)
 		atf_tc_fail("IBS Op allocation unexpectedly accepted a too-small "
 		    "sample rate");
 	}
-	ATF_CHECK(errno == EINVAL);
+	ATF_CHECK_MSG(errno == EINVAL,
+	    "expected pmc_allocate to fail with EINVAL, got errno=%d (%s)",
+	    errno, strerror(errno));
 }
 
 ATF_TC(ibs_hwpmc_alloc_reject_unknown_qualifier);
@@ -137,7 +141,9 @@ ATF_TC_BODY(ibs_hwpmc_alloc_reject_unknown_qualifier, tc)
 		atf_tc_fail("IBS Op allocation unexpectedly accepted an invalid "
 		    "qualifier");
 	}
-	ATF_CHECK(errno == EINVAL);
+	ATF_CHECK_MSG(errno == EINVAL,
+	    "expected pmc_allocate to fail with EINVAL, got errno=%d (%s)",
+	    errno, strerror(errno));
 }
 
 ATF_TP_ADD_TCS(tp)

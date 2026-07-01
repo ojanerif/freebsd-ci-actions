@@ -104,7 +104,8 @@ ATF_TC_WITHOUT_HEAD(ibs_unit_is_zen4_true);
 ATF_TC_BODY(ibs_unit_is_zen4_true, tc)
 {
 	/* Family 0x19, model 0x11 → Zen 4 */
-	ATF_CHECK(cpu_is_zen4_from_eax(0x00A10F10U) == true);
+	ATF_CHECK_MSG(cpu_is_zen4_from_eax(0x00A10F10U) == true,
+	    "EAX 0x00A10F10 (Family 0x19 model 0x11) must classify as Zen 4");
 }
 
 /* TC-UNIT-CPUID-10: cpu_is_zen4_from_eax() returns false for Zen 3 EAX */
@@ -112,7 +113,8 @@ ATF_TC_WITHOUT_HEAD(ibs_unit_is_zen4_false_zen3);
 ATF_TC_BODY(ibs_unit_is_zen4_false_zen3, tc)
 {
 	/* Family 0x19, model 0x21 → Zen 3, not Zen 4 */
-	ATF_CHECK(cpu_is_zen4_from_eax(0x00A20F10U) == false);
+	ATF_CHECK_MSG(cpu_is_zen4_from_eax(0x00A20F10U) == false,
+	    "EAX 0x00A20F10 (Family 0x19 model 0x21, Zen 3) must not classify as Zen 4");
 }
 
 /* TC-UNIT-CPUID-11: cpu_is_zen5_from_eax() returns true for Zen 5 EAX */
@@ -120,7 +122,8 @@ ATF_TC_WITHOUT_HEAD(ibs_unit_is_zen5_true);
 ATF_TC_BODY(ibs_unit_is_zen5_true, tc)
 {
 	/* Family 0x1A → Zen 5 */
-	ATF_CHECK(cpu_is_zen5_from_eax(0x00B10F00U) == true);
+	ATF_CHECK_MSG(cpu_is_zen5_from_eax(0x00B10F00U) == true,
+	    "EAX 0x00B10F00 (Family 0x1A) must classify as Zen 5");
 }
 
 /* TC-UNIT-CPUID-12: cpu_is_zen5_from_eax() returns false for Zen 6 EAX */
@@ -128,7 +131,8 @@ ATF_TC_WITHOUT_HEAD(ibs_unit_is_zen5_false_zen6);
 ATF_TC_BODY(ibs_unit_is_zen5_false_zen6, tc)
 {
 	/* Family 0x1A, model 0x50 → Zen 6, not Zen 5 */
-	ATF_CHECK(cpu_is_zen5_from_eax(0x00B50F00U) == false);
+	ATF_CHECK_MSG(cpu_is_zen5_from_eax(0x00B50F00U) == false,
+	    "EAX 0x00B50F00 (Family 0x1A model 0x50, Zen 6) must not classify as Zen 5");
 }
 
 ATF_TP_ADD_TCS(tp)

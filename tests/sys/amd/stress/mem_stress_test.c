@@ -277,7 +277,8 @@ ATF_TC_BODY(mem_stress_bandwidth, tc)
 
 	threads = calloc((size_t)ncpus, sizeof(pthread_t));
 	args    = calloc((size_t)ncpus, sizeof(struct bw_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	for (i = 0; i < ncpus; i++) {
 		args[i].stop           = &stop;
@@ -384,7 +385,8 @@ ATF_TC_BODY(mem_stress_tlb, tc)
 	ncpus   = stress_ncpus();
 	threads = calloc((size_t)ncpus, sizeof(pthread_t));
 	args    = calloc((size_t)ncpus, sizeof(struct tlb_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	for (i = 0; i < ncpus; i++) {
 		args[i].stop   = &stop;

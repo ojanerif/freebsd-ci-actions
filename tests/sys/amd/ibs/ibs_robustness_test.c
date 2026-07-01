@@ -206,7 +206,7 @@ ATF_TC_BODY(ibs_robustness_fork_under_sampling, tc)
 	ATF_REQUIRE_ERRNO(0, error == 0);
 
 	pid = fork();
-	ATF_REQUIRE(pid >= 0);
+	ATF_REQUIRE_MSG(pid >= 0, "fork() failed: %s", strerror(errno));
 
 	if (pid == 0) {
 		/* Child: pin to CPU 1 and clear its IBS state */
@@ -219,7 +219,8 @@ ATF_TC_BODY(ibs_robustness_fork_under_sampling, tc)
 	}
 
 	waitpid(pid, &status, 0);
-	ATF_CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+	ATF_CHECK_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+	    "child did not exit cleanly (status=0x%x)", status);
 
 	/* Re-read CPU 0's IBS state — should still have our value */
 	error = read_msr(0, MSR_IBS_FETCH_CTL, &readback);

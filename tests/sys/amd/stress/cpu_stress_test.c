@@ -96,7 +96,8 @@ ATF_TC_BODY(cpu_stress_compute, tc)
 	ncpus   = stress_ncpus();
 	threads = calloc((size_t)ncpus, sizeof(pthread_t));
 	args    = calloc((size_t)ncpus, sizeof(struct compute_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	for (i = 0; i < ncpus; i++) {
 		args[i].stop       = &stop;
@@ -186,7 +187,8 @@ ATF_TC_BODY(cpu_stress_context_switch, tc)
 
 	threads = calloc((size_t)nthreads, sizeof(pthread_t));
 	args    = calloc((size_t)nthreads, sizeof(struct ctx_switch_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	for (i = 0; i < nthreads; i++) {
 		args[i].stop   = &stop;
@@ -287,7 +289,8 @@ ATF_TC_BODY(cpu_stress_fpu, tc)
 	ncpus   = stress_ncpus();
 	threads = calloc((size_t)ncpus, sizeof(pthread_t));
 	args    = calloc((size_t)ncpus, sizeof(struct fpu_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	for (i = 0; i < ncpus; i++) {
 		args[i].stop       = &stop;

@@ -125,7 +125,9 @@ ATF_TC_BODY(ibs_ctl_reserved_bits, tc)
 		error = read_msr(0, MSR_IBS_FETCH_CTL, &readback);
 		ATF_REQUIRE_ERRNO(0, error == 0);
 		/* Reserved bits should not be writable */
-		ATF_CHECK((readback & (1ULL << 63)) == 0);
+		ATF_CHECK_MSG((readback & (1ULL << 63)) == 0,
+		    "reserved bit 63 must not be writable in MSR_IBS_FETCH_CTL: 0x%jx",
+		    (uintmax_t)readback);
 	}
 
 	/* Restore original value */
@@ -161,8 +163,10 @@ ATF_TC_BODY(ibs_extended_features, tc)
 	/* Zen4+ should have additional feature bits */
 	if (cpu_is_zen4()) {
 		/* Zen4 has IBS feature extensions */
-		ATF_CHECK((val & IBS_FETCH_CTL_ENABLE) == 0 ||
-		    (val & IBS_FETCH_CTL_ENABLE) != 0);
+		ATF_CHECK_MSG((val & IBS_FETCH_CTL_ENABLE) == 0 ||
+		    (val & IBS_FETCH_CTL_ENABLE) != 0,
+		    "MSR_IBS_FETCH_CTL smoke read failed on Zen4: 0x%jx",
+		    (uintmax_t)val);
 	}
 }
 

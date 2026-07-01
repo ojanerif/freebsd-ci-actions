@@ -309,7 +309,8 @@ ATF_TC_BODY(l3_stress_concurrent_workload, tc)
 
 	threads = calloc(ncpus, sizeof(pthread_t));
 	args    = calloc(ncpus, sizeof(struct concurrent_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	event = amd_umcdf_pick_pmu_event(l3_stress_miss_events, &cfg,
 	    &last_error);

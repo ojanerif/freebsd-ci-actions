@@ -110,7 +110,7 @@ ATF_TC_BODY(ibs_l3miss_detect_zen4, tc)
 		atf_tc_skip("CPU does not support IBS");
 
 	family = get_cpu_family();
-	ATF_CHECK(family > 0);
+	ATF_CHECK_MSG(family > 0, "get_cpu_family() returned 0 (invalid CPU family)");
 
 	/* Check for Zen 4+ IBS extensions via CPUID 0x8000001B */
 	if (do_cpuid_ioctl(0x8000001B, regs) != 0)
@@ -124,7 +124,8 @@ ATF_TC_BODY(ibs_l3miss_detect_zen4, tc)
 
 	/* Verify we're on Zen 4+ (Family 19h) */
 	ATF_CHECK_EQ(family, 0x19);
-	ATF_CHECK(cpu_supports_l3miss_only());
+	ATF_CHECK_MSG(cpu_supports_l3miss_only(),
+	    "Zen 4+ (Family 0x19) CPU must report L3MissOnly support");
 }
 
 /*
@@ -165,10 +166,14 @@ ATF_TC_BODY(ibs_l3miss_fetch_enable, tc)
 	/* Read back and verify L3MissOnly bit is set */
 	error = read_msr(0, MSR_IBS_FETCH_CTL, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((readback & IBS_FETCH_L3_MISS_ONLY) != 0);
+	ATF_CHECK_MSG((readback & IBS_FETCH_L3_MISS_ONLY) != 0,
+	    "L3MissOnly bit did not read back set in MSR_IBS_FETCH_CTL: 0x%jx",
+	    (uintmax_t)readback);
 
 	/* Verify enable bit is still cleared */
-	ATF_CHECK((readback & IBS_FETCH_ENABLE_BIT) == 0);
+	ATF_CHECK_MSG((readback & IBS_FETCH_ENABLE_BIT) == 0,
+	    "Fetch enable bit unexpectedly set after write: 0x%jx",
+	    (uintmax_t)readback);
 
 	/* Restore original value */
 	error = write_msr(0, MSR_IBS_FETCH_CTL, original);
@@ -213,10 +218,14 @@ ATF_TC_BODY(ibs_l3miss_op_enable, tc)
 	/* Read back and verify L3MissOnly bit is set */
 	error = read_msr(0, MSR_IBS_OP_CTL, &readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((readback & IBS_OP_L3_MISS_ONLY) != 0);
+	ATF_CHECK_MSG((readback & IBS_OP_L3_MISS_ONLY) != 0,
+	    "L3MissOnly bit did not read back set in MSR_IBS_OP_CTL: 0x%jx",
+	    (uintmax_t)readback);
 
 	/* Verify enable bit is still cleared */
-	ATF_CHECK((readback & IBS_OP_ENABLE_BIT) == 0);
+	ATF_CHECK_MSG((readback & IBS_OP_ENABLE_BIT) == 0,
+	    "Op enable bit unexpectedly set after write: 0x%jx",
+	    (uintmax_t)readback);
 
 	/* Restore original value */
 	error = write_msr(0, MSR_IBS_OP_CTL, original);
@@ -285,20 +294,26 @@ ATF_TC_BODY(ibs_l3miss_filter_behavior, tc)
 	/* Read back and verify Fetch */
 	error = read_msr(0, MSR_IBS_FETCH_CTL, &fetch_readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((fetch_readback & IBS_FETCH_L3_MISS_ONLY) != 0);
+	ATF_CHECK_MSG((fetch_readback & IBS_FETCH_L3_MISS_ONLY) != 0,
+	    "Fetch L3MissOnly not set on readback: 0x%jx",
+	    (uintmax_t)fetch_readback);
 
 	/* Read back and verify Op */
 	error = read_msr(0, MSR_IBS_OP_CTL, &op_readback);
 	ATF_REQUIRE_ERRNO(0, error == 0);
-	ATF_CHECK((op_readback & IBS_OP_L3_MISS_ONLY) != 0);
+	ATF_CHECK_MSG((op_readback & IBS_OP_L3_MISS_ONLY) != 0,
+	    "Op L3MissOnly not set on readback: 0x%jx",
+	    (uintmax_t)op_readback);
 
 	/*
 	 * Verify that both L3MissOnly bits are set simultaneously.
 	 * This confirms the filter can be configured for both
 	 * Fetch and Op sampling paths.
 	 */
-	ATF_CHECK((fetch_readback & IBS_FETCH_L3_MISS_ONLY) != 0 &&
-	    (op_readback & IBS_OP_L3_MISS_ONLY) != 0);
+	ATF_CHECK_MSG((fetch_readback & IBS_FETCH_L3_MISS_ONLY) != 0 &&
+	    (op_readback & IBS_OP_L3_MISS_ONLY) != 0,
+	    "L3MissOnly must be set in both Fetch (0x%jx) and Op (0x%jx)",
+	    (uintmax_t)fetch_readback, (uintmax_t)op_readback);
 
 	/* Restore original values */
 	error = write_msr(0, MSR_IBS_FETCH_CTL, fetch_orig);
@@ -331,7 +346,7 @@ ATF_TC_BODY(ibs_l3miss_disabled_on_older, tc)
 		atf_tc_skip("CPU does not support IBS");
 
 	family = get_cpu_family();
-	ATF_CHECK(family > 0);
+	ATF_CHECK_MSG(family > 0, "get_cpu_family() returned 0 (invalid CPU family)");
 
 	/* Skip if we're on Zen 4+ (this test is for pre-Zen 4) */
 	if (cpu_supports_l3miss_only())
@@ -350,12 +365,15 @@ ATF_TC_BODY(ibs_l3miss_disabled_on_older, tc)
 	error = write_msr(0, MSR_IBS_FETCH_CTL, written);
 	if (error != 0) {
 		/* Write failed, which is acceptable on pre-Zen 4 */
-		ATF_CHECK(true);
+		ATF_CHECK_MSG(true,
+		    "write of reserved L3MissOnly bit rejected (acceptable pre-Zen 4)");
 	} else {
 		/* Write succeeded, verify bit reads back as 0 */
 		error = read_msr(0, MSR_IBS_FETCH_CTL, &readback);
 		ATF_REQUIRE_ERRNO(0, error == 0);
-		ATF_CHECK((readback & IBS_FETCH_L3_MISS_ONLY) == 0);
+		ATF_CHECK_MSG((readback & IBS_FETCH_L3_MISS_ONLY) == 0,
+		    "reserved L3MissOnly bit must read back 0 on pre-Zen 4: 0x%jx",
+		    (uintmax_t)readback);
 	}
 
 	/* Restore original value */

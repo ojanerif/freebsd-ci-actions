@@ -330,7 +330,8 @@ ATF_TC_BODY(l3_smp_aggregate_miss, tc)
 	/* --- Parallel run across all CPUs --- */
 	threads = calloc(ncpus, sizeof(pthread_t));
 	args    = calloc(ncpus, sizeof(struct agg_worker_arg));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	if (pmc_read(pmcid, &v2) != 0) {
 		free(threads); free(args);

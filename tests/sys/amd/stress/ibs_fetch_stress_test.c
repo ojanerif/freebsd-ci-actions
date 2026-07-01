@@ -182,7 +182,8 @@ ATF_TC_BODY(ibs_fetch_cpu_stress, tc)
 	ncpus   = stress_ncpus();
 	threads = calloc((size_t)ncpus, sizeof(pthread_t));
 	args    = calloc((size_t)ncpus, sizeof(*args));
-	ATF_REQUIRE(threads != NULL && args != NULL);
+	ATF_REQUIRE_MSG(threads != NULL && args != NULL,
+	    "calloc of thread/arg arrays failed");
 
 	for (i = 0; i < ncpus; i++) {
 		args[i].stop = &stop;
