@@ -218,6 +218,9 @@ DRY_RUN=0
 FORCE=0
 PARALLELISM="${PARALLELISM:-$(sysctl -n hw.ncpu 2>/dev/null || echo 1)}"
 HTML_DIR="${HTML_DIR:-/usr/local/www/darkhttpd}"
+# Base URL where HTML_DIR is served (darkhttpd on the CI host). Used to build
+# clickable links to the rendered HTML report in report emails.
+REPORT_BASE_URL="${REPORT_BASE_URL:-http://ruby-9470host}"
 RESULTS_DIR="${RESULTS_DIR:-$HTML_DIR/results-$(date +%Y-%m-%d_%H-%M-%S)}"
 TEST_RESULTS=""
 TOTAL_TESTS=0
@@ -907,6 +910,20 @@ send_mime_report() {
     } | sendmail -f "$SENDER_EMAIL" "$_smr_to"
 }
 
+# report_html_url <results_dir>
+# Print the public HTTP URL of a results directory's rendered HTML report.
+# Prints nothing when the directory is not served under HTML_DIR (e.g. the
+# /var/log fallback used when darkhttpd is not installed), so callers can
+# safely omit the link in that case.
+report_html_url() {
+    _rhu_dir="$1"
+    case "$_rhu_dir" in
+    "$HTML_DIR"/*)
+        printf '%s/%s/report.html' "$REPORT_BASE_URL" "$(basename "$_rhu_dir")"
+        ;;
+    esac
+}
+
 # send_report_email <report_txt> <verdict> <email_addr>
 send_report_email() {
     _report="$1"
@@ -931,6 +948,8 @@ send_report_email() {
         printf 'Host     : %s  (%s)\n' "$(uname -n)" "$(uname -r)"
         printf 'Suite    : %s\n' "$SUITE"
         [ -n "$CATEGORIES" ] && printf 'Categories: %s\n' "$CATEGORIES"
+        _sre_url=$(report_html_url "$(dirname "$_report")")
+        [ -n "$_sre_url" ] && printf 'HTML report: %s\n' "$_sre_url"
     )
     _sre_IFS="$IFS"; IFS=','
     for _sre_addr in $_to; do
@@ -1262,6 +1281,8 @@ ibs_autotest_run()
         printf 'Branch   : %s\n' "$AUTOTEST_BRANCH"
         printf 'Repo     : %s\n' "$AUTOTEST_REPO_URL"
         printf 'Trigger  : %s\n' "$AUTOTEST_TRIGGER_TIME"
+        _auto_url=$(report_html_url "$RESULTS_DIR")
+        [ -n "$_auto_url" ] && printf 'HTML report: %s\n' "$_auto_url"
         if [ -f "$_report" ]; then
             _em_total=$(awk '/^Tests Run :/{print $NF}' "$_report" | head -1)
             _em_pass=$(awk '/^Passed    :/{print $3}' "$_report" | head -1)
