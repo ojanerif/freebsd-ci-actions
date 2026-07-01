@@ -117,7 +117,7 @@ tsc_column_format_cleanup() { rm -f test.pmc; }
 atf_test_case json_tsc_unsigned cleanup
 json_tsc_unsigned_head()
 {
-	atf_set "descr" "pmcstat -R -j must emit unsigned TSC values — %jd-to-%ju fix (SWLSVROS-6363)"
+	atf_set "descr" "pmc filter -j must emit unsigned TSC values — %jd-to-%ju fix (SWLSVROS-6363)"
 	atf_set "require.user" "root"
 }
 json_tsc_unsigned_body()
@@ -125,27 +125,37 @@ json_tsc_unsigned_body()
 	pmc_check_support
 	pmc_capture "test.pmc"
 
-	# Detect whether -j is available.  A missing flag means the installed
-	# pmcstat predates SWLSVROS-6363 (QA branch not deployed): this is an
-	# environment/capability gap, not a feature defect, so skip rather than
-	# fail.  Genuine assertion failures (negative TSC values) below still fail.
-	if pmcstat -R test.pmc -j 2>&1 | grep -qi 'illegal option'; then
-		atf_skip "pmcstat -j flag not recognised — QA branch (SWLSVROS-6363) not installed"
+	# The JSON output with the unsigned-TSC fix (SWLSVROS-6363) is exposed by
+	# 'pmc filter -j' (usr.sbin/pmc → event_to_json() in libpmc_json.cc), NOT
+	# by pmcstat, which never had a -j flag.  On hosts with an older pmc(8)
+	# that predates the -j flag, getopt rejects it: treat that as an
+	# environment/capability gap and skip rather than fail.  Genuine assertion
+	# failures (negative TSC values) below still fail.
+	local ferr
+	ferr=$(pmc filter -j test.pmc test.json 2>&1) || true
+	case "$ferr" in
+	*"unknown option"*|*"invalid option"*|*"illegal option"*)
+		atf_skip "pmc filter -j not supported — QA branch (SWLSVROS-6363) not installed"
+		;;
+	esac
+
+	if [ ! -s test.json ]; then
+		atf_fail "pmc filter -j produced no JSON output"
 	fi
 
-	local out neg
-	out=$(pmcstat -R test.pmc -j 2>/dev/null)
-
-	if ! echo "$out" | grep -qE '"tsc"'; then
+	if ! grep -qE '"tsc"' test.json; then
 		atf_fail "No 'tsc' key found in JSON output"
 	fi
 
-	neg=$(echo "$out" | grep -cE '"tsc"[[:space:]]*:[[:space:]]*-')
+	# TSC is emitted as a quoted unsigned string: "tsc": "12345".
+	# A signed regression would render as "tsc": "-12345".
+	local neg
+	neg=$(grep -cE '"tsc"[[:space:]]*:[[:space:]]*"?-' test.json)
 	if [ "$neg" -gt 0 ]; then
 		atf_fail "$neg negative TSC value(s) in JSON output — unsigned fix not applied"
 	fi
 }
-json_tsc_unsigned_cleanup() { rm -f test.pmc; }
+json_tsc_unsigned_cleanup() { rm -f test.pmc test.json; }
 
 # ---------------------------------------------------------------------------
 # Test: basic flamegraph workflow must not regress
